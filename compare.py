@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import json
+import argparse
 from pathlib import Path
-from statistics import mean
 from typing import Any
 
 import pandas as pd
@@ -79,23 +79,37 @@ def print_comparison_table(summary: dict[str, Any]) -> None:
     print(f"\nWinner: {summary['winner']}")
 
 
-def run_pipeline() -> dict[str, Any]:
+def run_pipeline(offline: bool = False) -> dict[str, Any]:
     Path(OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
     scenarios = load_scenarios()
-    client = get_anthropic_client()
+    client = None if offline else get_anthropic_client()
 
+    mode_label = "offline" if offline else "Anthropic API"
+    print(f"Running pipeline in {mode_label} mode...")
     print(f"Generating emails with {MODEL_A}...")
-    model_a_generated = run_generation(scenarios, MODEL_A, TEMPERATURE_A)
+    model_a_generated = run_generation(
+        scenarios,
+        MODEL_A,
+        TEMPERATURE_A,
+        offline=offline,
+        model_profile="model_a",
+    )
     print(f"Generating emails with {MODEL_B}...")
-    model_b_generated = run_generation(scenarios, MODEL_B, TEMPERATURE_B)
+    model_b_generated = run_generation(
+        scenarios,
+        MODEL_B,
+        TEMPERATURE_B,
+        offline=offline,
+        model_profile="model_b",
+    )
 
     model_a_path = f"{OUTPUT_DIR}results_model_a.csv"
     model_b_path = f"{OUTPUT_DIR}results_model_b.csv"
 
     print(f"Evaluating {MODEL_A}...")
-    evaluate_all(scenarios, model_a_generated, client, model_a_path)
+    evaluate_all(scenarios, model_a_generated, client, model_a_path, offline=offline)
     print(f"Evaluating {MODEL_B}...")
-    evaluate_all(scenarios, model_b_generated, client, model_b_path)
+    evaluate_all(scenarios, model_b_generated, client, model_b_path, offline=offline)
 
     model_a_summary = summarize_csv(model_a_path, MODEL_A)
     model_b_summary = summarize_csv(model_b_path, MODEL_B)
@@ -116,4 +130,13 @@ def run_pipeline() -> dict[str, Any]:
 
 
 if __name__ == "__main__":
-    run_pipeline()
+    parser = argparse.ArgumentParser(
+        description="Run email generation, evaluation, and model comparison."
+    )
+    parser.add_argument(
+        "--offline",
+        action="store_true",
+        help="Run without an Anthropic API key using local deterministic generation and heuristics.",
+    )
+    args = parser.parse_args()
+    run_pipeline(offline=args.offline)

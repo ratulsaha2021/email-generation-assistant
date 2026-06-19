@@ -64,6 +64,52 @@ def fact_recall_score(scenario: dict[str, Any], generated_email: str) -> float:
     return found / len(facts)
 
 
+def _score_from_markers(
+    generated_email: str,
+    markers: set[str],
+    base_score: float = 0.6,
+) -> float:
+    email_lower = generated_email.lower()
+    marker_hits = sum(1 for marker in markers if marker in email_lower)
+    return min(1.0, base_score + marker_hits * 0.1)
+
+
+def offline_tone_accuracy_score(generated_email: str, tone: str) -> float:
+    """Approximate tone matching locally for no-API demo runs."""
+    tone_markers = {
+        "formal": {"dear", "sincerely", "regards", "stakeholders", "review"},
+        "casual": {"hi", "happy", "thanks", "hello", "everyone"},
+        "urgent": {"urgent", "today", "priority", "as soon as possible", "critical"},
+        "empathetic": {"sorry", "understand", "appreciate", "thank", "flexibility"},
+        "assertive": {"action required", "need", "please confirm", "deadline", "approval"},
+    }
+    return round(_score_from_markers(generated_email, tone_markers.get(tone, set())), 4)
+
+
+def offline_fluency_professionalism_score(generated_email: str) -> float:
+    """Approximate grammar, structure, and professional polish locally."""
+    if not generated_email.strip():
+        return 0.0
+
+    score = 0.55
+    lines = [line.strip() for line in generated_email.splitlines() if line.strip()]
+    word_count = len(re.findall(r"\b\w+\b", generated_email))
+    sentence_count = len(re.findall(r"[.!?]", generated_email))
+
+    if generated_email.lower().startswith("subject:"):
+        score += 0.1
+    if len(lines) >= 5:
+        score += 0.1
+    if 80 <= word_count <= 250:
+        score += 0.1
+    if sentence_count >= 4:
+        score += 0.1
+    if any(signoff in generated_email.lower() for signoff in ("regards", "best", "sincerely", "thanks")):
+        score += 0.05
+
+    return round(min(score, 1.0), 4)
+
+
 def _judge_score(
     anthropic_client: Anthropic,
     prompt: str,
@@ -125,13 +171,20 @@ Email: {generated_email}"""
 def evaluate_single(
     scenario: dict[str, Any],
     generated_email: str,
-    anthropic_client: Anthropic,
+    anthropic_client: Anthropic | None,
+    offline: bool = False,
 ) -> dict[str, float | int]:
     fact_score = fact_recall_score(scenario, generated_email)
-    tone_score = tone_accuracy_score(
-        generated_email, scenario["tone"], anthropic_client
-    )
-    fluency_score = fluency_professionalism_score(generated_email, anthropic_client)
+    if offline:
+        tone_score = offline_tone_accuracy_score(generated_email, scenario["tone"])
+        fluency_score = offline_fluency_professionalism_score(generated_email)
+    else:
+        if anthropic_client is None:
+            raise ValueError("anthropic_client is required unless offline=True.")
+        tone_score = tone_accuracy_score(
+            generated_email, scenario["tone"], anthropic_client
+        )
+        fluency_score = fluency_professionalism_score(generated_email, anthropic_client)
     composite_score = mean([fact_score, tone_score, fluency_score])
 
     return {
@@ -146,8 +199,9 @@ def evaluate_single(
 def evaluate_all(
     scenarios: list[dict[str, Any]],
     generated_emails: list[dict[str, Any]],
-    anthropic_client: Anthropic,
+    anthropic_client: Anthropic | None,
     output_path: str = f"{OUTPUT_DIR}results_model_a.csv",
+    offline: bool = False,
 ) -> list[dict[str, Any]]:
     """Evaluate all generated emails and save a CSV."""
     email_by_id = {item["scenario_id"]: item for item in generated_emails}
@@ -156,7 +210,7 @@ def evaluate_all(
     for scenario in scenarios:
         generated = email_by_id.get(scenario["scenario_id"], {})
         email = generated.get("generated_email", "")
-        scores = evaluate_single(scenario, email, anthropic_client)
+        scores = evaluate_single(scenario, email, anthropic_client, offline=offline)
         results.append(
             {
                 "scenario_id": scenario["scenario_id"],

@@ -1,7 +1,7 @@
 # Email Generation Assistant
 
 ## Overview
-Email Generation Assistant is a complete evaluation project for comparing two Anthropic models on business email generation. It creates emails from structured scenarios, evaluates them with one rule-based metric and two LLM-as-a-judge metrics, and produces side-by-side model results. The project includes ten realistic business scenarios with human-written reference emails, reusable Python modules, representative result artifacts, and a final evaluation report. It is designed as a clean GitHub-ready repository that can be run end to end with an Anthropic API key.
+Email Generation Assistant is a complete evaluation project for comparing two Anthropic models on business email generation. It creates emails from structured scenarios, evaluates them with one rule-based metric and two LLM-as-a-judge metrics, and produces side-by-side model results. The project includes ten realistic business scenarios with human-written reference emails, reusable Python modules, representative result artifacts, and a final evaluation report. It can run with the Anthropic API for live model results or in fully offline mode for no-cost local demos.
 
 ## Project Structure
 ```text
@@ -49,6 +49,9 @@ email-generation-assistant/
 # Run the full pipeline (generation + evaluation + comparison)
 python compare.py
 
+# Run the full pipeline without an API key
+python compare.py --offline
+
 # Run generation only
 python generate.py
 
@@ -61,6 +64,9 @@ python evaluate.py
 - `results/results_model_b.csv` — Model B scores for all 10 scenarios
 - `results/evaluation_summary.json` — Side-by-side comparison and winner
 - `report/final_report.md` — Full written report
+
+## Offline Mode
+Use `python compare.py --offline` when you do not have a paid Anthropic API key. Offline mode uses the local human reference emails as the stronger model profile, deterministic local drafts as the second model profile, the NLTK fact recall metric, and local heuristic replacements for tone and fluency judging. This mode is intended for demos, development, and repository validation; use normal `python compare.py` for live Anthropic model evaluation.
 
 ## Prompting Technique
 This project uses Chain-of-Thought + Role-Playing. The model reasons through tone analysis, fact mapping, and structure planning inside `<thinking>` tags before generating the final email. This ensures deliberate, consistent, and auditable outputs.

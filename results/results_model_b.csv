@@ -1,11 +1,101 @@
 scenario_id,intent,tone,fact_recall_score,tone_accuracy_score,fluency_score,composite_score,generated_email
-1,Follow up after a client meeting,formal,0.80,0.80,0.85,0.82,Representative generated email pending live run.
-2,Request a project deadline extension,empathetic,0.75,0.75,0.80,0.77,Representative generated email pending live run.
-3,Introduce a new team member,casual,0.70,0.80,0.80,0.77,Representative generated email pending live run.
-4,Escalate an unresolved support ticket,urgent,0.80,0.75,0.80,0.78,Representative generated email pending live run.
-5,Send a project status update,formal,0.85,0.80,0.85,0.83,Representative generated email pending live run.
-6,Decline a vendor proposal politely,empathetic,0.70,0.75,0.80,0.75,Representative generated email pending live run.
-7,Request budget approval,assertive,0.75,0.70,0.80,0.75,Representative generated email pending live run.
-8,Apologize for a service disruption,empathetic,0.85,0.85,0.85,0.85,Representative generated email pending live run.
-9,Invite stakeholders to a product demo,formal,0.80,0.80,0.80,0.80,Representative generated email pending live run.
-10,Send a performance review reminder to a manager,assertive,0.70,0.70,0.75,0.72,Representative generated email pending live run.
+1,Follow up after a client meeting,formal,0.75,0.9,0.8,0.8167,"Subject: Follow Up After A Client Meeting
+
+Dear team,
+
+I am writing regarding follow up after a client meeting. The meeting was held on Tuesday with Acme Retail's operations team The client is interested in automating weekly inventory reports A pilot proposal will be sent by Friday
+
+Please review this update and confirm the appropriate next step.
+
+Regards,
+Customer Operations Team"
+2,Request a project deadline extension,empathetic,0.75,0.9,0.8,0.8167,"Subject: Request A Project Deadline Extension
+
+Hi team,
+
+I am writing regarding request a project deadline extension. The current deadline is May 30 The analytics team discovered data quality issues in the migration file An additional five business days are needed
+
+Thank you for your understanding and flexibility.
+
+Regards,
+Customer Operations Team"
+3,Introduce a new team member,casual,0.75,0.8,0.8,0.7833,"Subject: Introduce A New Team Member
+
+Hi team,
+
+I am writing regarding introduce a new team member. Lena Ortiz is joining as Senior UX Researcher Her first day is Monday, June 10 She previously worked on enterprise healthcare platforms
+
+Thanks, and please let me know what you think.
+
+Regards,
+Customer Operations Team"
+4,Escalate an unresolved support ticket,urgent,0.75,1.0,0.8,0.85,"Subject: Urgent: Escalate An Unresolved Support Ticket
+
+Hi team,
+
+I am writing regarding escalate an unresolved support ticket. Support ticket #48291 has been open for nine days The customer cannot export monthly billing reports Two previous troubleshooting sessions did not resolve the issue
+
+Please treat this as a priority and respond as soon as possible today.
+
+Regards,
+Customer Operations Team"
+5,Send a project status update,formal,0.75,0.9,0.8,0.8167,"Subject: Send A Project Status Update
+
+Dear team,
+
+I am writing regarding send a project status update. The CRM integration project is 70% complete API authentication testing finished this week Data mapping for legacy accounts remains in progress
+
+Please review this update and confirm the appropriate next step.
+
+Regards,
+Customer Operations Team"
+6,Decline a vendor proposal politely,empathetic,0.75,0.9,0.8,0.8167,"Subject: Decline A Vendor Proposal Politely
+
+Hi team,
+
+I am writing regarding decline a vendor proposal politely. The vendor proposed a managed security monitoring service The proposal was reviewed by IT and Finance The pricing exceeds the approved budget
+
+Thank you for your understanding and flexibility.
+
+Regards,
+Customer Operations Team"
+7,Request budget approval,assertive,0.75,1.0,0.8,0.85,"Subject: Action Required: Request Budget Approval
+
+Hi team,
+
+I am writing regarding request budget approval. The customer success team needs $18,000 for onboarding software The software will reduce manual onboarding tasks by an estimated 30% The request supports the Q3 retention initiative
+
+Please confirm ownership and next steps by the requested deadline.
+
+Regards,
+Customer Operations Team"
+8,Apologize for a service disruption,empathetic,0.75,0.9,0.8,0.8167,"Subject: Apologize For A Service Disruption
+
+Hi team,
+
+I am writing regarding apologize for a service disruption. The dashboard service was unavailable for 42 minutes this morning The outage was caused by a failed database failover All services are now restored
+
+Thank you for your understanding and flexibility.
+
+Regards,
+Customer Operations Team"
+9,Invite stakeholders to a product demo,formal,0.75,1.0,0.9,0.8833,"Subject: Invite Stakeholders To A Product Demo
+
+Dear team,
+
+I am writing regarding invite stakeholders to a product demo. The product demo is scheduled for Thursday at 2 p.m. Eastern The demo will cover the new analytics dashboard Stakeholders from Sales, Product, and Customer Success are invited
+
+Please review this update and confirm the appropriate next step.
+
+Regards,
+Customer Operations Team"
+10,Send a performance review reminder to a manager,assertive,0.75,0.9,0.8,0.8167,"Subject: Action Required: Send A Performance Review Reminder To A Manager
+
+Hi team,
+
+I am writing regarding send a performance review reminder to a manager. Manager self-assessments are due Friday Reviews must include feedback for all direct reports Calibration meetings begin next Tuesday
+
+Please confirm ownership and next steps by the requested deadline.
+
+Regards,
+Customer Operations Team"
