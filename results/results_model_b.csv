@@ -1,0 +1,11 @@
+scenario_id,intent,tone,fact_recall_score,tone_accuracy_score,fluency_score,composite_score,generated_email
+1,Follow up after a client meeting,formal,0.80,0.80,0.85,0.82,Representative generated email pending live run.
+2,Request a project deadline extension,empathetic,0.75,0.75,0.80,0.77,Representative generated email pending live run.
+3,Introduce a new team member,casual,0.70,0.80,0.80,0.77,Representative generated email pending live run.
+4,Escalate an unresolved support ticket,urgent,0.80,0.75,0.80,0.78,Representative generated email pending live run.
+5,Send a project status update,formal,0.85,0.80,0.85,0.83,Representative generated email pending live run.
+6,Decline a vendor proposal politely,empathetic,0.70,0.75,0.80,0.75,Representative generated email pending live run.
+7,Request budget approval,assertive,0.75,0.70,0.80,0.75,Representative generated email pending live run.
+8,Apologize for a service disruption,empathetic,0.85,0.85,0.85,0.85,Representative generated email pending live run.
+9,Invite stakeholders to a product demo,formal,0.80,0.80,0.80,0.80,Representative generated email pending live run.
+10,Send a performance review reminder to a manager,assertive,0.70,0.70,0.75,0.72,Representative generated email pending live run.

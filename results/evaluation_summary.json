@@ -1,0 +1,17 @@
+{
+  "model_a": {
+    "model_name": "claude-sonnet-4-6",
+    "avg_fact_recall": 0.95,
+    "avg_tone_accuracy": 0.89,
+    "avg_fluency": 0.915,
+    "avg_composite": 0.919
+  },
+  "model_b": {
+    "model_name": "claude-haiku-4-5-20251001",
+    "avg_fact_recall": 0.77,
+    "avg_tone_accuracy": 0.77,
+    "avg_fluency": 0.81,
+    "avg_composite": 0.784
+  },
+  "winner": "model_a"
+}
