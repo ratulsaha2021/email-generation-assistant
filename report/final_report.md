@@ -1,36 +1,13 @@
 # Email Generation Assistant — Final Evaluation Report
 
-## 1. Prompt Template
+## 1. Offline Generation Method
 
-### System Prompt
+This project runs entirely offline and does not require external services. It compares two deterministic local generation profiles:
 
-```text
-You are a senior business communications specialist with 15 years of experience writing professional corporate emails.
+- **Model A: `offline-reference-profile`** uses the human reference email for each scenario as a high-quality target profile.
+- **Model B: `offline-template-profile`** creates a concise local draft from the scenario intent, requested tone, and the first three key facts.
 
-ALWAYS follow a strict Chain-of-Thought reasoning process BEFORE writing the email, using these exact steps wrapped in <thinking> tags:
-
-<thinking>
-Step 1 — Tone Analysis: What does the requested tone mean in practice? What vocabulary, sentence length, and formality level does it require?
-Step 2 — Fact Mapping: List each key fact and decide WHERE in the email it will be placed (opening, body paragraph 1, body paragraph 2, closing).
-Step 3 — Structure Planning: Decide the email structure — subject line, greeting, opening hook, body, call to action, sign-off.
-Step 4 — Draft the Email: Write the final email following the plan above.
-</thinking>
-
-The <thinking> block must appear BEFORE the final email in the output. The final email must be clearly separated, starting with "---EMAIL---". Seamlessly weave ALL key facts into the email naturally — never as a raw list.
-```
-
-### User Prompt Template
-
-```text
-Intent: {intent}
-Key Facts:
-{key_facts}
-Tone: {tone}
-
-Instruction: Follow your Chain-of-Thought steps inside <thinking> tags, then write the final email after the ---EMAIL--- separator. Include a Subject line. Do not add commentary after the email.
-```
-
-Chain-of-Thought + Role-Playing was selected because email generation requires deliberate reasoning across multiple constraints simultaneously: tone calibration, fact placement, and structural planning. By forcing explicit step-by-step reasoning before writing, the model produces more intentional and consistent outputs compared to pattern-matching approaches like Few-Shot. The `<thinking>` block also makes the generation process transparent and auditable during evaluation.
+The original scenario design still reflects prompt-engineering principles: each email task includes an intent, required facts, requested tone, and a complete professional reference email. This makes the dataset useful for repeatable local evaluation, classroom demonstrations, and public GitHub sharing without external services.
 
 ## 2. Custom Metric Definitions
 
@@ -40,52 +17,52 @@ Fact Recall Score measures what fraction of the required key facts appear in the
 
 **Metric 2: Tone Accuracy Score**
 
-Tone Accuracy Score measures how well the generated email matches the requested tone. The generated email and requested tone are sent to `claude-haiku-4-5-20251001` as an LLM judge, which returns a single integer from 1 to 5 where 1 means completely wrong tone, 3 means partially matching tone, and 5 means perfectly matching tone. The score is normalized by dividing by 5, producing a range from 0.0 to 1.0. Parsing failures default to 0.5.
+Tone Accuracy Score measures how well the generated email matches the requested tone using local keyword heuristics. Each tone has a small set of expected markers, such as formal greetings and sign-offs for formal emails, urgency markers for urgent emails, and direct action language for assertive emails. The score is calculated from marker coverage and normalized to a range from 0.0 to 1.0.
 
 **Metric 3: Fluency and Professionalism Score**
 
-Fluency and Professionalism Score measures grammatical correctness, clarity, business appropriateness, and logical flow independent of the scenario content. The generated email is sent to `claude-haiku-4-5-20251001` as an LLM judge, which returns a single integer from 1 to 5. The result is normalized by dividing by 5, producing a range from 0.0 to 1.0.
+Fluency and Professionalism Score measures whether the email has professional structure and readability signals. The local scorer checks for a subject line, paragraph structure, appropriate length, enough sentence boundaries, and a recognizable business sign-off. The final score ranges from 0.0 to 1.0.
 
 ## 3. Evaluation Results
 
-Tables below are pre-filled with representative values. Run compare.py to generate live results which will overwrite these with actual scores.
+Tables below reflect the current offline run. Run `python compare.py` to regenerate the CSV files and summary.
 
-### Model A: claude-sonnet-4-6
-
-| Scenario | Fact Recall | Tone Accuracy | Fluency | Composite |
-|---:|---:|---:|---:|---:|
-| 1 | 1.00 | 0.90 | 0.95 | 0.95 |
-| 2 | 0.95 | 0.90 | 0.90 | 0.92 |
-| 3 | 0.90 | 0.85 | 0.90 | 0.88 |
-| 4 | 0.95 | 0.90 | 0.90 | 0.92 |
-| 5 | 1.00 | 0.90 | 0.95 | 0.95 |
-| 6 | 0.90 | 0.90 | 0.90 | 0.90 |
-| 7 | 0.95 | 0.85 | 0.90 | 0.90 |
-| 8 | 1.00 | 0.95 | 0.95 | 0.97 |
-| 9 | 0.95 | 0.90 | 0.90 | 0.92 |
-| 10 | 0.90 | 0.85 | 0.90 | 0.88 |
-| **Average** | **0.95** | **0.89** | **0.92** | **0.92** |
-
-### Model B: claude-haiku-4-5-20251001
+### Model A: offline-reference-profile
 
 | Scenario | Fact Recall | Tone Accuracy | Fluency | Composite |
 |---:|---:|---:|---:|---:|
-| 1 | 0.80 | 0.80 | 0.85 | 0.82 |
-| 2 | 0.75 | 0.75 | 0.80 | 0.77 |
-| 3 | 0.70 | 0.80 | 0.80 | 0.77 |
-| 4 | 0.80 | 0.75 | 0.80 | 0.78 |
-| 5 | 0.85 | 0.80 | 0.85 | 0.83 |
-| 6 | 0.70 | 0.75 | 0.80 | 0.75 |
-| 7 | 0.75 | 0.70 | 0.80 | 0.75 |
-| 8 | 0.85 | 0.85 | 0.85 | 0.85 |
-| 9 | 0.80 | 0.80 | 0.80 | 0.80 |
-| 10 | 0.70 | 0.70 | 0.75 | 0.72 |
-| **Average** | **0.77** | **0.77** | **0.81** | **0.78** |
+| 1 | 1.00 | 0.90 | 1.00 | 0.97 |
+| 2 | 1.00 | 0.90 | 1.00 | 0.97 |
+| 3 | 1.00 | 1.00 | 1.00 | 1.00 |
+| 4 | 1.00 | 1.00 | 1.00 | 1.00 |
+| 5 | 1.00 | 1.00 | 1.00 | 1.00 |
+| 6 | 1.00 | 0.80 | 1.00 | 0.93 |
+| 7 | 1.00 | 0.80 | 1.00 | 0.93 |
+| 8 | 1.00 | 1.00 | 1.00 | 1.00 |
+| 9 | 1.00 | 0.90 | 1.00 | 0.97 |
+| 10 | 1.00 | 0.80 | 1.00 | 0.93 |
+| **Average** | **1.00** | **0.91** | **1.00** | **0.97** |
+
+### Model B: offline-template-profile
+
+| Scenario | Fact Recall | Tone Accuracy | Fluency | Composite |
+|---:|---:|---:|---:|---:|
+| 1 | 0.75 | 0.90 | 0.80 | 0.82 |
+| 2 | 0.75 | 0.90 | 0.80 | 0.82 |
+| 3 | 0.75 | 0.80 | 0.80 | 0.78 |
+| 4 | 0.75 | 1.00 | 0.80 | 0.85 |
+| 5 | 0.75 | 0.90 | 0.80 | 0.82 |
+| 6 | 0.75 | 0.90 | 0.80 | 0.82 |
+| 7 | 0.75 | 1.00 | 0.80 | 0.85 |
+| 8 | 0.75 | 0.90 | 0.80 | 0.82 |
+| 9 | 0.75 | 1.00 | 0.90 | 0.88 |
+| 10 | 0.75 | 0.90 | 0.80 | 0.82 |
+| **Average** | **0.75** | **0.92** | **0.81** | **0.83** |
 
 ## 4. Comparative Analysis
 
-Model A performed better across all three custom metrics, with the strongest advantage in fact recall. Its average fact recall score was 0.95 compared with Model B's 0.77, a difference of 0.18. Model A also led in tone accuracy by 0.12 and fluency by 0.11. The overall composite gap was 0.14, with Model A scoring 0.92 and Model B scoring 0.78. This pattern suggests that the larger model was better at managing multiple constraints at once, especially when the prompt required all key facts to be woven naturally into a polished business email.
+The offline-reference-profile performs better overall, with an average composite score of 0.97 compared with 0.83 for the offline-template-profile. The largest gap is fact recall: the reference profile scores 1.00 because it includes all required facts in each scenario, while the template profile scores 0.75 because it intentionally uses only the first three key facts. This makes the comparison useful for demonstrating how missing details affect evaluation quality.
 
-The biggest failure mode of the lower-performing model was incomplete constraint coverage in scenarios with several operational details. Model B scored only 0.70 fact recall in Scenario 3, where it needed to include the new hire's title, start date, prior enterprise healthcare experience, and ownership of customer interview planning. It also scored 0.70 fact recall in Scenario 6 and Scenario 10, suggesting that it was more likely to omit a budget, timing, stakeholder, or process detail when trying to keep the email concise. Tone was another weakness in assertive scenarios: Model B scored 0.70 for Scenario 7 and Scenario 10, where the request needed to be direct without becoming abrupt.
+Tone accuracy is much closer. The reference profile scores 0.91 on average, while the template profile scores 0.92 because it explicitly adds tone markers such as urgent subject lines, direct assertive language, formal greetings, and empathetic closings. This shows a useful limitation of heuristic tone evaluation: simple marker-based scoring can reward surface-level tone cues even when the email is less complete.
 
-For production use, Model A is the better recommendation. Its higher composite score indicates more reliable performance across factual completeness, requested tone, and professional writing quality. In a business communications workflow, missed facts can cause rework, customer confusion, or compliance issues, so the 0.95 fact recall average is particularly valuable. Model B may still be useful for lower-risk drafts or cost-sensitive batch generation, but Model A is the stronger default for customer-facing or executive-facing email generation where accuracy and polish matter most.
+Fluency is the second major differentiator. The reference emails are fuller, better structured, and more natural, producing a 1.00 average fluency score. The template profile averages 0.80 because its drafts are professional but shorter and less developed. For public demonstration and no-cost testing, the offline pipeline is reliable and repeatable. For production-grade writing, the reference-profile behavior represents the quality target: complete facts, appropriate tone, and polished business structure.
