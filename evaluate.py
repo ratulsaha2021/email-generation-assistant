@@ -14,7 +14,7 @@ import pandas as pd
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 
-OUTPUT_DIR = "results/"
+from constants import OUTPUT_DIR, RESULTS_MODEL_A_PATH, SCENARIOS_PATH
 
 
 PROJECT_NLTK_DATA = Path(__file__).resolve().parent / "nltk_data"
@@ -73,19 +73,29 @@ def _score_from_markers(
     return min(1.0, base_score + marker_hits * 0.1)
 
 
-def offline_tone_accuracy_score(generated_email: str, tone: str) -> float:
-    """Approximate tone matching locally for no-API demo runs."""
-    tone_markers = {
-        "formal": {"dear", "sincerely", "regards", "stakeholders", "review"},
-        "casual": {"hi", "happy", "thanks", "hello", "everyone"},
-        "urgent": {"urgent", "today", "priority", "as soon as possible", "critical"},
-        "empathetic": {"sorry", "understand", "appreciate", "thank", "flexibility"},
-        "assertive": {"action required", "need", "please confirm", "deadline", "approval"},
-    }
-    return round(_score_from_markers(generated_email, tone_markers.get(tone, set())), 4)
+TONE_MARKERS = {
+    "formal": {"dear", "sincerely", "regards", "stakeholders", "review"},
+    "casual": {"hi", "happy", "thanks", "hello", "everyone"},
+    "urgent": {"urgent", "today", "priority", "as soon as possible", "critical"},
+    "empathetic": {"sorry", "understand", "appreciate", "thank", "flexibility"},
+    "assertive": {
+        "action required",
+        "need",
+        "please confirm",
+        "deadline",
+        "approval",
+    },
+}
+
+SIGNOFF_MARKERS = ("regards", "best", "sincerely", "thanks")
 
 
-def offline_fluency_professionalism_score(generated_email: str) -> float:
+def tone_accuracy_score(generated_email: str, tone: str) -> float:
+    """Approximate tone matching with local marker coverage."""
+    return round(_score_from_markers(generated_email, TONE_MARKERS.get(tone, set())), 4)
+
+
+def fluency_professionalism_score(generated_email: str) -> float:
     """Approximate grammar, structure, and professional polish locally."""
     if not generated_email.strip():
         return 0.0
@@ -103,23 +113,10 @@ def offline_fluency_professionalism_score(generated_email: str) -> float:
         score += 0.1
     if sentence_count >= 4:
         score += 0.1
-    if any(signoff in generated_email.lower() for signoff in ("regards", "best", "sincerely", "thanks")):
+    if any(signoff in generated_email.lower() for signoff in SIGNOFF_MARKERS):
         score += 0.05
 
     return round(min(score, 1.0), 4)
-
-
-def tone_accuracy_score(
-    generated_email: str,
-    tone: str,
-) -> float:
-    return offline_tone_accuracy_score(generated_email, tone)
-
-
-def fluency_professionalism_score(
-    generated_email: str,
-) -> float:
-    return offline_fluency_professionalism_score(generated_email)
 
 
 def evaluate_single(
@@ -143,7 +140,7 @@ def evaluate_single(
 def evaluate_all(
     scenarios: list[dict[str, Any]],
     generated_emails: list[dict[str, Any]],
-    output_path: str = f"{OUTPUT_DIR}results_model_a.csv",
+    output_path: Path = RESULTS_MODEL_A_PATH,
 ) -> list[dict[str, Any]]:
     """Evaluate all generated emails and save a CSV."""
     email_by_id = {item["scenario_id"]: item for item in generated_emails}
@@ -173,10 +170,16 @@ def print_summary(results: list[dict[str, Any]]) -> None:
     if not results:
         print("No evaluation results available.")
         return
-    print(f"Average fact_recall_score: {mean(row['fact_recall_score'] for row in results):.4f}")
-    print(f"Average tone_accuracy_score: {mean(row['tone_accuracy_score'] for row in results):.4f}")
-    print(f"Average fluency_score: {mean(row['fluency_score'] for row in results):.4f}")
-    print(f"Overall average composite_score: {mean(row['composite_score'] for row in results):.4f}")
+    averages = {
+        "fact_recall_score": mean(row["fact_recall_score"] for row in results),
+        "tone_accuracy_score": mean(row["tone_accuracy_score"] for row in results),
+        "fluency_score": mean(row["fluency_score"] for row in results),
+        "composite_score": mean(row["composite_score"] for row in results),
+    }
+    print(f"Average fact_recall_score: {averages['fact_recall_score']:.4f}")
+    print(f"Average tone_accuracy_score: {averages['tone_accuracy_score']:.4f}")
+    print(f"Average fluency_score: {averages['fluency_score']:.4f}")
+    print(f"Overall average composite_score: {averages['composite_score']:.4f}")
 
 
 def _load_generated(path: str) -> list[dict[str, Any]]:
@@ -197,8 +200,8 @@ def _load_generated(path: str) -> list[dict[str, Any]]:
 
 
 if __name__ == "__main__":
-    with Path("scenarios.json").open("r", encoding="utf-8") as file:
+    with SCENARIOS_PATH.open("r", encoding="utf-8") as file:
         scenarios_data = json.load(file)
-    generated_path = f"{OUTPUT_DIR}generated_model_a.json"
+    generated_path = OUTPUT_DIR / "generated_model_a.json"
     generated_data = _load_generated(generated_path)
     evaluate_all(scenarios_data, generated_data)

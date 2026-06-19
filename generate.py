@@ -4,43 +4,78 @@ from __future__ import annotations
 
 import json
 import re
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-OUTPUT_DIR = "results/"
-MODEL_A_NAME = "offline-reference-profile"
-MODEL_B_NAME = "offline-template-profile"
+from constants import (
+    MODEL_A_KEY,
+    MODEL_A_NAME,
+    MODEL_B_KEY,
+    OUTPUT_DIR,
+    SCENARIOS_PATH,
+)
 
 
-def generate_email(scenario: dict[str, Any], model_profile: str) -> str:
+@dataclass(frozen=True)
+class TemplateStyle:
+    """Tone-specific pieces for the deterministic template profile."""
+
+    greeting: str
+    subject_prefix: str
+    closing: str
+
+
+TEMPLATE_STYLES = {
+    "formal": TemplateStyle(
+        greeting="Dear team,",
+        subject_prefix="",
+        closing="Please review this update and confirm the appropriate next step.",
+    ),
+    "casual": TemplateStyle(
+        greeting="Hi team,",
+        subject_prefix="",
+        closing="Thanks, and please let me know what you think.",
+    ),
+    "urgent": TemplateStyle(
+        greeting="Hi team,",
+        subject_prefix="Urgent: ",
+        closing="Please treat this as a priority and respond as soon as possible today.",
+    ),
+    "empathetic": TemplateStyle(
+        greeting="Hi team,",
+        subject_prefix="",
+        closing="Thank you for your understanding and flexibility.",
+    ),
+    "assertive": TemplateStyle(
+        greeting="Hi team,",
+        subject_prefix="Action Required: ",
+        closing="Please confirm ownership and next steps by the requested deadline.",
+    ),
+}
+
+
+def _normalize_subject(text: str) -> str:
+    return re.sub(r"\s+", " ", text).strip().title()
+
+
+def generate_email(scenario: dict[str, Any], profile_key: str) -> str:
     """Generate a deterministic local email without calling an external API."""
-    if model_profile == "model_a":
+    if profile_key == MODEL_A_KEY:
         return scenario["human_reference_email"].strip()
 
-    subject = re.sub(r"\s+", " ", scenario["intent"]).strip().title()
-    greeting = "Hi team,"
-    if scenario["tone"] == "formal":
-        greeting = "Dear team,"
-    elif scenario["tone"] == "urgent":
-        subject = f"Urgent: {subject}"
-    elif scenario["tone"] == "assertive":
-        subject = f"Action Required: {subject}"
+    if profile_key != MODEL_B_KEY:
+        raise ValueError(f"Unknown generation profile: {profile_key}")
 
-    facts = scenario["key_facts"][:3]
-    fact_sentence = " ".join(facts)
-    closing_by_tone = {
-        "formal": "Please review this update and confirm the appropriate next step.",
-        "casual": "Thanks, and please let me know what you think.",
-        "urgent": "Please treat this as a priority and respond as soon as possible today.",
-        "empathetic": "Thank you for your understanding and flexibility.",
-        "assertive": "Please confirm ownership and next steps by the requested deadline.",
-    }
+    style = TEMPLATE_STYLES.get(scenario["tone"], TEMPLATE_STYLES["casual"])
+    subject = f"{style.subject_prefix}{_normalize_subject(scenario['intent'])}"
+    fact_sentence = " ".join(scenario["key_facts"][:3])
 
     return (
         f"Subject: {subject}\n\n"
-        f"{greeting}\n\n"
+        f"{style.greeting}\n\n"
         f"I am writing regarding {scenario['intent'].lower()}. {fact_sentence}\n\n"
-        f"{closing_by_tone.get(scenario['tone'], 'Please let me know the next step.')}\n\n"
+        f"{style.closing}\n\n"
         "Regards,\n"
         "Customer Operations Team"
     )
@@ -48,25 +83,22 @@ def generate_email(scenario: dict[str, Any], model_profile: str) -> str:
 
 def run_generation(
     scenarios: list[dict[str, Any]],
-    model_profile: str = "model_a",
+    profile_key: str = MODEL_A_KEY,
 ) -> list[dict[str, Any]]:
     """Generate emails for all scenarios."""
-    generated: list[dict[str, Any]] = []
-    for scenario in scenarios:
-        email = generate_email(scenario, model_profile)
-        generated.append(
-            {
-                "scenario_id": scenario["scenario_id"],
-                "intent": scenario["intent"],
-                "tone": scenario["tone"],
-                "key_facts": scenario["key_facts"],
-                "generated_email": email,
-            }
-        )
-    return generated
+    return [
+        {
+            "scenario_id": scenario["scenario_id"],
+            "intent": scenario["intent"],
+            "tone": scenario["tone"],
+            "key_facts": scenario["key_facts"],
+            "generated_email": generate_email(scenario, profile_key),
+        }
+        for scenario in scenarios
+    ]
 
 
-def load_scenarios(path: str = "scenarios.json") -> list[dict[str, Any]]:
+def load_scenarios(path: Path = SCENARIOS_PATH) -> list[dict[str, Any]]:
     with Path(path).open("r", encoding="utf-8") as file:
         return json.load(file)
 
@@ -81,6 +113,6 @@ def save_generated_emails(
 
 if __name__ == "__main__":
     scenarios = load_scenarios()
-    results = run_generation(scenarios, model_profile="model_a")
-    save_generated_emails(results, f"{OUTPUT_DIR}generated_model_a.json")
+    results = run_generation(scenarios, profile_key=MODEL_A_KEY)
+    save_generated_emails(results, str(OUTPUT_DIR / "generated_model_a.json"))
     print(f"Generated {len(results)} emails with {MODEL_A_NAME}.")

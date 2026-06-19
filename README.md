@@ -8,6 +8,7 @@ Email Generation Assistant is a fully offline project for generating and evaluat
 email-generation-assistant/
 ├── README.md                         # Setup, usage, and project documentation
 ├── requirements.txt                  # Offline Python dependencies
+├── constants.py                      # Shared paths and profile names
 ├── generate.py                       # Deterministic local email generation logic
 ├── evaluate.py                       # Local fact recall, tone, and fluency metrics
 ├── compare.py                        # End-to-end offline orchestration script
