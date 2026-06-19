@@ -1,139 +1,129 @@
-"""Evaluate generated emails with local, offline metrics."""
+"""Evaluate generated emails using Ollama as an LLM-as-a-Judge."""
 
 from __future__ import annotations
 
-import ast
 import json
 import re
+import time
 from pathlib import Path
 from statistics import mean
 from typing import Any
 
-import nltk
 import pandas as pd
-from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize
+import requests
 
 from constants import OUTPUT_DIR, RESULTS_MODEL_A_PATH, SCENARIOS_PATH
 
+OLLAMA_API = "http://localhost:11434/api/chat"
+MODEL_NAME = "llama3.2:3b"
 
-PROJECT_NLTK_DATA = Path(__file__).resolve().parent / "nltk_data"
-if PROJECT_NLTK_DATA.exists():
-    nltk.data.path.append(str(PROJECT_NLTK_DATA))
+EVALUATOR_SYSTEM_PROMPT = """You are an expert email quality assessor. You will be given:
+1. The email's intended purpose (intent)
+2. Required key facts that must appear in the email
+3. The requested tone
+4. The generated email
+
+Score the email on THREE metrics from 0.0 to 1.0:
+
+1. fact_recall_score: What fraction of the key facts are accurately and naturally included in the email? Consider a fact "recalled" if its core meaning is clearly present, even if wording differs. Report as a decimal (e.g., 0.75 for 3 out of 4 facts).
+
+2. tone_accuracy_score: How well does the email match the requested tone?
+   - formal: proper salutation, professional language, complete sentences, appropriate sign-off
+   - casual: warm, conversational, friendly tone
+   - urgent: conveys time-sensitivity, uses direct language, clear call to action
+   - empathetic: understanding, acknowledging difficulty, gracious language
+   - assertive: confident, direct, action-oriented without aggression
+
+3. clarity_professionalism_score: How clear, well-structured, and professionally written is the email? Consider: subject line quality, logical flow, grammar, sentence variety, appropriate length, and professional sign-off.
+
+Return ONLY valid JSON in this exact format (no other text):
+{"fact_recall_score": 0.0, "tone_accuracy_score": 0.0, "clarity_professionalism_score": 0.0}"""
 
 
-def _ensure_nltk_data() -> None:
-    for resource, lookup in (
-        ("punkt", "tokenizers/punkt"),
-        ("punkt_tab", "tokenizers/punkt_tab"),
-        ("stopwords", "corpora/stopwords"),
-    ):
+def _call_ollama(messages: list[dict], temperature: float = 0.0) -> str:
+    payload = {
+        "model": MODEL_NAME,
+        "messages": messages,
+        "stream": False,
+        "temperature": temperature,
+    }
+    for attempt in range(3):
         try:
-            nltk.data.find(lookup)
-        except LookupError:
-            nltk.download(resource, quiet=True)
+            resp = requests.post(OLLAMA_API, json=payload, timeout=120)
+            resp.raise_for_status()
+            data = resp.json()
+            return data["message"]["content"].strip()
+        except requests.exceptions.Timeout:
+            if attempt < 2:
+                time.sleep(2 ** attempt)
+                continue
+            raise
+        except requests.exceptions.ConnectionError:
+            raise RuntimeError(
+                "Cannot connect to Ollama. Ensure it's running: ollama serve"
+            )
+    return ""
 
 
-def _meaningful_keywords(text: str) -> list[str]:
-    _ensure_nltk_data()
-    stop_words = set(stopwords.words("english"))
-    tokens = word_tokenize(text.lower())
-    return [
-        token
-        for token in tokens
-        if token.isalnum() and token not in stop_words and len(token) > 1
-    ]
-
-
-def fact_recall_score(scenario: dict[str, Any], generated_email: str) -> float:
-    """Score how many required key facts appear in the generated email."""
-    email_lower = generated_email.lower()
-    facts = scenario.get("key_facts", [])
-    if not facts:
-        return 0.0
-
-    found = 0
-    for fact in facts:
-        keywords = _meaningful_keywords(fact)
-        if not keywords:
-            continue
-        overlap = sum(1 for keyword in keywords if keyword in email_lower)
-        if overlap / len(keywords) >= 0.60:
-            found += 1
-    return found / len(facts)
-
-
-def _score_from_markers(
-    generated_email: str,
-    markers: set[str],
-    base_score: float = 0.6,
-) -> float:
-    email_lower = generated_email.lower()
-    marker_hits = sum(1 for marker in markers if marker in email_lower)
-    return min(1.0, base_score + marker_hits * 0.1)
-
-
-TONE_MARKERS = {
-    "formal": {"dear", "sincerely", "regards", "stakeholders", "review"},
-    "casual": {"hi", "happy", "thanks", "hello", "everyone"},
-    "urgent": {"urgent", "today", "priority", "as soon as possible", "critical"},
-    "empathetic": {"sorry", "understand", "appreciate", "thank", "flexibility"},
-    "assertive": {
-        "action required",
-        "need",
-        "please confirm",
-        "deadline",
-        "approval",
-    },
-}
-
-SIGNOFF_MARKERS = ("regards", "best", "sincerely", "thanks")
-
-
-def tone_accuracy_score(generated_email: str, tone: str) -> float:
-    """Approximate tone matching with local marker coverage."""
-    return round(_score_from_markers(generated_email, TONE_MARKERS.get(tone, set())), 4)
-
-
-def fluency_professionalism_score(generated_email: str) -> float:
-    """Approximate grammar, structure, and professional polish locally."""
-    if not generated_email.strip():
-        return 0.0
-
-    score = 0.55
-    lines = [line.strip() for line in generated_email.splitlines() if line.strip()]
-    word_count = len(re.findall(r"\b\w+\b", generated_email))
-    sentence_count = len(re.findall(r"[.!?]", generated_email))
-
-    if generated_email.lower().startswith("subject:"):
-        score += 0.1
-    if len(lines) >= 5:
-        score += 0.1
-    if 80 <= word_count <= 250:
-        score += 0.1
-    if sentence_count >= 4:
-        score += 0.1
-    if any(signoff in generated_email.lower() for signoff in SIGNOFF_MARKERS):
-        score += 0.05
-
-    return round(min(score, 1.0), 4)
+def _parse_json_from_response(text: str) -> dict[str, float] | None:
+    json_match = re.search(r"\{.*\}", text, re.DOTALL)
+    if json_match:
+        try:
+            return json.loads(json_match.group())
+        except json.JSONDecodeError:
+            pass
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        return None
 
 
 def evaluate_single(
     scenario: dict[str, Any],
     generated_email: str,
 ) -> dict[str, float | int]:
-    fact_score = fact_recall_score(scenario, generated_email)
-    tone_score = tone_accuracy_score(generated_email, scenario["tone"])
-    fluency_score = fluency_professionalism_score(generated_email)
-    composite_score = mean([fact_score, tone_score, fluency_score])
+    if not generated_email.strip():
+        return {
+            "scenario_id": scenario["scenario_id"],
+            "fact_recall_score": 0.0,
+            "tone_accuracy_score": 0.0,
+            "clarity_professionalism_score": 0.0,
+            "composite_score": 0.0,
+        }
+
+    facts_text = "\n".join(f"- {f}" for f in scenario.get("key_facts", []))
+    user_content = (
+        f"Intent: {scenario['intent']}\n\n"
+        f"Required Key Facts:\n{facts_text}\n\n"
+        f"Requested Tone: {scenario['tone']}\n\n"
+        f"Generated Email:\n---\n{generated_email}\n---"
+    )
+
+    messages = [
+        {"role": "system", "content": EVALUATOR_SYSTEM_PROMPT},
+        {"role": "user", "content": user_content},
+    ]
+
+    response = _call_ollama(messages)
+    scores = _parse_json_from_response(response)
+
+    if scores is None:
+        scores = {
+            "fact_recall_score": 0.0,
+            "tone_accuracy_score": 0.0,
+            "clarity_professionalism_score": 0.0,
+        }
+
+    fact = float(scores.get("fact_recall_score", 0.0))
+    tone = float(scores.get("tone_accuracy_score", 0.0))
+    clarity = float(scores.get("clarity_professionalism_score", 0.0))
 
     return {
         "scenario_id": scenario["scenario_id"],
-        "fact_recall_score": round(fact_score, 4),
-        "tone_accuracy_score": round(tone_score, 4),
-        "fluency_score": round(fluency_score, 4),
-        "composite_score": round(composite_score, 4),
+        "fact_recall_score": round(fact, 4),
+        "tone_accuracy_score": round(tone, 4),
+        "clarity_professionalism_score": round(clarity, 4),
+        "composite_score": round(mean([fact, tone, clarity]), 4),
     }
 
 
@@ -142,23 +132,22 @@ def evaluate_all(
     generated_emails: list[dict[str, Any]],
     output_path: Path = RESULTS_MODEL_A_PATH,
 ) -> list[dict[str, Any]]:
-    """Evaluate all generated emails and save a CSV."""
     email_by_id = {item["scenario_id"]: item for item in generated_emails}
     results: list[dict[str, Any]] = []
 
     for scenario in scenarios:
-        generated = email_by_id.get(scenario["scenario_id"], {})
+        sid = scenario["scenario_id"]
+        print(f"  Evaluating scenario {sid}/10...")
+        generated = email_by_id.get(sid, {})
         email = generated.get("generated_email", "")
         scores = evaluate_single(scenario, email)
-        results.append(
-            {
-                "scenario_id": scenario["scenario_id"],
-                "intent": scenario["intent"],
-                "tone": scenario["tone"],
-                **scores,
-                "generated_email": email,
-            }
-        )
+        results.append({
+            "scenario_id": sid,
+            "intent": scenario["intent"],
+            "tone": scenario["tone"],
+            **scores,
+            "generated_email": email,
+        })
 
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(results).to_csv(output_path, index=False)
@@ -171,28 +160,30 @@ def print_summary(results: list[dict[str, Any]]) -> None:
         print("No evaluation results available.")
         return
     averages = {
-        "fact_recall_score": mean(row["fact_recall_score"] for row in results),
-        "tone_accuracy_score": mean(row["tone_accuracy_score"] for row in results),
-        "fluency_score": mean(row["fluency_score"] for row in results),
-        "composite_score": mean(row["composite_score"] for row in results),
+        "fact_recall_score": mean(r["fact_recall_score"] for r in results),
+        "tone_accuracy_score": mean(r["tone_accuracy_score"] for r in results),
+        "clarity_professionalism_score": mean(
+            r["clarity_professionalism_score"] for r in results
+        ),
+        "composite_score": mean(r["composite_score"] for r in results),
     }
-    print(f"Average fact_recall_score: {averages['fact_recall_score']:.4f}")
-    print(f"Average tone_accuracy_score: {averages['tone_accuracy_score']:.4f}")
-    print(f"Average fluency_score: {averages['fluency_score']:.4f}")
-    print(f"Overall average composite_score: {averages['composite_score']:.4f}")
+    print(f"  Avg fact_recall_score: {averages['fact_recall_score']:.4f}")
+    print(f"  Avg tone_accuracy_score: {averages['tone_accuracy_score']:.4f}")
+    print(f"  Avg clarity_professionalism_score: {averages['clarity_professionalism_score']:.4f}")
+    print(f"  Avg composite_score: {averages['composite_score']:.4f}")
 
 
 def _load_generated(path: str) -> list[dict[str, Any]]:
     suffix = Path(path).suffix.lower()
     if suffix == ".json":
-        with Path(path).open("r", encoding="utf-8") as file:
-            return json.load(file)
-
+        with Path(path).open("r", encoding="utf-8") as f:
+            return json.load(f)
     frame = pd.read_csv(path)
     rows = frame.to_dict(orient="records")
     for row in rows:
         if isinstance(row.get("key_facts"), str):
             try:
+                import ast
                 row["key_facts"] = ast.literal_eval(row["key_facts"])
             except (SyntaxError, ValueError):
                 row["key_facts"] = []
@@ -200,8 +191,8 @@ def _load_generated(path: str) -> list[dict[str, Any]]:
 
 
 if __name__ == "__main__":
-    with SCENARIOS_PATH.open("r", encoding="utf-8") as file:
-        scenarios_data = json.load(file)
+    with SCENARIOS_PATH.open("r", encoding="utf-8") as f:
+        scenarios_data = json.load(f)
     generated_path = OUTPUT_DIR / "generated_model_a.json"
     generated_data = _load_generated(generated_path)
     evaluate_all(scenarios_data, generated_data)

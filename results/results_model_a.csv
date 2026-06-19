@@ -1,143 +1,148 @@
-scenario_id,intent,tone,fact_recall_score,tone_accuracy_score,fluency_score,composite_score,generated_email
-1,Follow up after a client meeting,formal,1.0,0.9,1.0,0.9667,"Subject: Follow-Up on Tuesday's Inventory Automation Discussion
+scenario_id,intent,tone,fact_recall_score,tone_accuracy_score,clarity_professionalism_score,composite_score,generated_email
+1,Follow up after a client meeting,formal,0.8,1.0,0.9,0.9,"Subject: Next Steps Following Our Meeting on Tuesday
 
 Dear Ms. Carter,
 
-Thank you for meeting with us on Tuesday and for including Acme Retail's operations team in such a productive discussion. I appreciated the opportunity to learn more about the team's current reporting process and the time spent each week preparing inventory updates across your regional locations.
+I wanted to follow up on our meeting with Acme Retail's operations team on Tuesday, where we discussed the potential benefits of automating weekly inventory reports for your business. As you mentioned during the discussion, this could significantly reduce manual effort and improve visibility into stock exceptions.
 
-Based on the conversation, it is clear that automating weekly inventory reports could reduce manual effort, improve consistency, and give your managers faster visibility into stock exceptions. Our team is preparing a pilot proposal that will outline the recommended workflow, implementation timeline, success criteria, and estimated support requirements. I will send that proposal by Friday for your review.
+Our proposal, which includes a detailed pilot plan, is being prepared by our technical team and will be sent to you by Friday. We believe that this pilot project will provide valuable insights into how automation can be effectively integrated with your current systems.
 
-As a next step, I recommend scheduling a technical discovery call next week with your reporting lead and our solutions architect. That session will help us confirm data sources, access requirements, and any integration considerations before the pilot begins.
+To further refine the proposal and ensure alignment between our teams, we recommend scheduling a technical discovery call for next week. This session will enable us to confirm data sources, access requirements, and any integration considerations before proceeding with the pilot. Our team is available on multiple weekdays during the following weeks: [insert dates]. Please let me know which time slot works best for your team.
 
-Please let me know which times work best for your team next week.
-
-Sincerely,
-Jordan Lee"
-2,Request a project deadline extension,empathetic,1.0,0.9,1.0,0.9667,"Subject: Request for Five-Day Extension on Migration Deliverable
-
-Hi Priya,
-
-I want to acknowledge the effort your team has already put into keeping the migration work on track for the May 30 deadline. We know this deliverable is important to the broader program, and we have been working carefully to avoid creating downstream pressure for your team.
-
-During final validation, our analytics team discovered data quality issues in the migration file that need to be corrected before we can responsibly hand over the output. Rather than sending a file that may require rework later, we believe the best course is to resolve the inconsistencies now and complete one additional QA pass.
-
-We are requesting an extension of five business days for this deliverable. Importantly, this adjustment will not affect the launch date, because the remaining implementation tasks can continue in parallel while we clean and revalidate the data.
-
-I understand deadline changes are never ideal, and I appreciate your flexibility. Please let me know if you would like a brief walkthrough of the issues and our recovery plan.
-
-Best,
-Morgan"
-3,Introduce a new team member,casual,1.0,1.0,1.0,1.0,"Subject: Please Welcome Lena Ortiz to the Team
-
-Hi everyone,
-
-I am happy to share that Lena Ortiz is joining us as our new Senior UX Researcher. Her first day will be Monday, June 10, and she will be working closely with Product, Design, and Customer Success as we move into the next phase of the portal redesign.
-
-Lena brings strong experience from her work on enterprise healthcare platforms, where she focused on turning complex user needs into practical product insights. That background should be especially helpful for us as we dig deeper into how administrators, clinicians, and support teams actually use the portal day to day.
-
-One of Lena's first priorities will be leading customer interview planning for the redesign effort. She will help us define participant criteria, structure the interview guide, and make sure the findings translate into decisions the team can act on.
-
-Please take a moment to say hello when she starts on Monday. I am excited for everyone to meet her and for the perspective she will bring to the team.
-
-Thanks,
-Alex"
-4,Escalate an unresolved support ticket,urgent,1.0,1.0,1.0,1.0,"Subject: Urgent Escalation Needed for Ticket #48291
-
-Hi Support Leadership Team,
-
-I am escalating support ticket #48291 because it has now been open for nine days and is blocking a critical customer workflow. The customer is unable to export monthly billing reports, which they need for their internal finance close process.
-
-The team has already completed two troubleshooting sessions with the customer, but neither session resolved the issue. At this point, the customer is understandably frustrated, and the account team is concerned that continued delays will damage confidence in our support process.
-
-Please assign a senior engineer to review the ticket and provide a response by 3 p.m. today. The immediate need is to confirm whether the issue is caused by account configuration, a permissions problem, or a product defect, and to give the customer a clear next step.
-
-I am available to join a handoff call if helpful, but we need visible progress today. Thank you for treating this as a priority.
-
-Regards,
-Dana"
-5,Send a project status update,formal,1.0,1.0,1.0,1.0,"Subject: CRM Integration Project Status Update
-
-Dear Stakeholders,
-
-I am writing to provide the latest status update on the CRM integration project. As of this week, the project is approximately 70% complete and remains aligned with the plan for the July 15 milestone.
-
-The primary accomplishment this week was the completion of API authentication testing. The results confirmed that the integration can securely connect to the required services using the approved authentication flow. This removes a major technical dependency and allows the engineering team to proceed with broader end-to-end testing.
-
-Data mapping for legacy accounts remains in progress. The team is currently reviewing field-level differences between the legacy system and the new CRM structure to ensure that account history, ownership, and segmentation data are transferred accurately. We are monitoring this work closely because it is the most complex remaining activity.
-
-At this time, there are no new risks requiring escalation. We will continue to provide updates as data mapping advances and testing expands.
-
-Sincerely,
-Taylor"
-6,Decline a vendor proposal politely,empathetic,1.0,0.8,1.0,0.9333,"Subject: Update on Managed Security Monitoring Proposal
-
-Hi Daniel,
-
-Thank you for the time and care your team put into the managed security monitoring proposal. We appreciated the detailed walkthrough, the responsiveness during follow-up questions, and the effort to tailor the recommendation to our current environment.
-
-After a full review with both IT and Finance, we have decided not to move forward with the proposal at this time. The main factor is budget alignment. While the service offering is strong and relevant to our needs, the pricing exceeds the approved budget for the current planning cycle.
-
-I know this is not the outcome you were hoping for, especially given the work your team invested. Please know that the decision reflects timing and budget constraints rather than a lack of interest in the solution. We may revisit the proposal next fiscal year as our security roadmap and funding priorities are refreshed.
-
-Thank you again for your partnership and professionalism throughout the process. I hope we can stay in touch as future opportunities develop.
+We are excited about the opportunity to help Acme Retail streamline its inventory reporting process and look forward to working closely with you over the coming week.
 
 Best regards,
-Renee"
-7,Request budget approval,assertive,1.0,0.8,1.0,0.9333,"Subject: Budget Approval Request for Onboarding Software
+Jordan Lee"
+2,Request a project deadline extension,empathetic,0.8,1.0,0.9,0.9,"Subject: Request for Deadline Extension on Upcoming Project Launch
 
-Hi Martin,
+Dear [Project Lead],
 
-I am requesting approval for an $18,000 budget allocation for new onboarding software for the Customer Success team. This purchase directly supports the Q3 retention initiative and addresses a clear operational gap in our current onboarding process.
+I'm writing to respectfully request a deadline extension for our upcoming project, which was previously scheduled to launch on May 30. After further review of the migration file with the analytics team, we've identified some critical data quality issues that require additional attention before the launch can move forward.
 
-Today, our team spends too much time on manual onboarding tasks that can be standardized and automated. Based on the vendor analysis and workflow review, the software is expected to reduce those manual tasks by approximately 30%. That time savings would allow Customer Success Managers to focus more consistently on adoption risk, customer education, and early value milestones.
+The team is working diligently to resolve these issues, but an additional five business days are needed to ensure the quality and accuracy of the data. I understand the importance of meeting deadlines, and I want to assure you that this extension will not impact our planned launch date. We're committed to delivering a high-quality solution that meets your expectations.
 
-The timing is important. We need approval by June 21 to secure the discounted pricing currently offered by the vendor. Waiting beyond that date would increase the cost and delay implementation into the retention initiative window.
+I'd like to propose a revised deadline of June 12, which would give us sufficient time to address these issues and ensure a smooth launch. The team is confident in their ability to deliver an outstanding result within this timeframe.
 
-I recommend approving this request so we can move forward with procurement and begin implementation planning immediately. Please let me know if you need any additional financial details before confirming.
+Please let me know if this revised deadline aligns with your plans, or if we can discuss further adjustments. I appreciate your understanding and flexibility in this matter.
 
-Regards,
-Samira"
-8,Apologize for a service disruption,empathetic,1.0,1.0,1.0,1.0,"Subject: Apology and Update on This Morning's Dashboard Disruption
+Best regards,
+[Your Name]"
+3,Introduce a new team member,casual,0.85,1.0,0.95,0.9333,"Subject: Meet Our New Team Member - Lena Ortiz!
+
+Hey Team,
+
+We're excited to welcome Lena Ortiz, our new Senior UX Researcher! As of Monday, June 10, she'll be joining us and diving into her first project, leading customer interview planning for the portal redesign.
+
+Lena comes from a background in enterprise healthcare platforms, where she honed her skills in understanding user behavior and informing product decisions that drive real results. We're stoked to have her expertise on board and can't wait to see what she'll achieve with our team.
+
+If you get a chance to meet Lena before her first day, please say hi! We're looking forward to getting to know her better and exploring the many ways her experience will help us create an amazing product.
+
+Cheers,
+[Your Name]"
+4,Escalate an unresolved support ticket,urgent,0.83,1.0,0.92,0.9167,"Subject: Urgent Escalation of Support Ticket #48291 - Monthly Billing Report Issue
+
+Dear Senior Engineer Team,
+
+I am writing to escalate support ticket #48291, which has been open for nine days and remains unresolved. As a reminder, the customer is experiencing issues with exporting monthly billing reports from our application. We have already conducted two troubleshooting sessions (Session 1: [date] and Session 2: [date]) to diagnose and resolve this problem, but unfortunately, neither effort was successful.
+
+Given the prolonged duration of this issue and the customer's pressing need for access to these reports, I am requesting a senior engineer response by 3 p.m. today. The customer is facing critical business decisions that rely on timely data analysis, and continued support assistance will be required beyond the next available support window.
+
+A quick resolution is essential to maintain our relationship with this key customer and prevent any potential reputation damage. Your prompt attention to this matter would greatly appreciate.
+
+Please let me know if there's any additional information you require from me or if you have any questions regarding the ticket.
+
+Sincerely,
+David Kim
+Support Team Lead"
+5,Send a project status update,formal,0.8,1.0,0.9,0.9,"Subject: Project Update: CRM Integration
+
+Dear [Recipient],
+
+I am pleased to provide a status update on our CRM integration project, which is currently at 70% completion. This milestone marks significant progress toward meeting our July 15 deadline.
+
+Our API authentication testing was successfully completed this week, demonstrating the reliability of the system in handling user credentials and access control. Although some remaining work remains, including the ongoing data mapping for legacy accounts, we are confident that these efforts will be completed on schedule.
+
+To date, all project timelines and milestones have been respected, ensuring our CRM integration project stays on track for its target completion date. If you require any specific information or wish to review the current status of the project, I encourage you to reach out directly to me.
+
+I look forward to providing further updates as we approach our deadline.
+
+Sincerely,
+[Your Name]"
+6,Decline a vendor proposal politely,empathetic,0.8,1.0,0.9,0.9,"Subject: Appreciation for Managed Security Monitoring Proposal
+
+Dear Mr. Thompson,
+
+Thank you for taking the time to share your proposal for a managed security monitoring service with us. We appreciate the value you bring to your clients and understand that your services align well with our organization's needs.
+
+After reviewing the proposal, I wanted to personally reach out to express our gratitude for considering our company as a potential client. However, after careful consideration and discussions between IT and Finance teams, we have decided not to move forward at this time due to pricing concerns that exceed our approved budget.
+
+Please know that your expertise in managed security monitoring is recognized, and we appreciate the effort you put into crafting a comprehensive proposal. We will continue to monitor industry trends and best practices in security monitoring services, and it's possible that we may revisit proposals of this nature next fiscal year as part of our strategic planning.
+
+Thank you again for thinking of us, and I wish your organization continued success in serving its clients.
+
+Sincerely,
+Emily Kim"
+7,Request budget approval,assertive,0.8,1.0,0.9,0.9,"Subject: Request for Budget Approval for Onboarding Software
+
+Dear [Decision Maker],
+
+I am writing to formally request budget approval for $18,000 to purchase onboarding software for our customer success team. This investment will directly support the launch of our Q3 retention initiative and contribute significantly to enhancing our team's efficiency.
+
+Our research indicates that this software has a proven track record of reducing manual onboarding tasks by an estimated 30%, resulting in substantial time savings and improved quality. By adopting this solution, we aim to further streamline our processes, improve customer satisfaction, and drive long-term value for the business.
+
+The approved funds will be used exclusively for purchasing the software, with no additional expenses or overruns anticipated. The discounted pricing offered by the vendor is contingent on securing approval by June 21; therefore, timely review and decision-making are essential to secure this advantageous pricing tier.
+
+I believe that this investment aligns with our strategic objectives and will yield tangible benefits in the coming months. I would appreciate it if you could consider this request by [Specific Date] so we can finalize the purchase and start realizing the cost savings soon.
+
+Thank you for your attention to this matter, and please do not hesitate to contact me should you require any additional information or clarification.
+
+Sincerely,
+[Your Name]"
+8,Apologize for a service disruption,empathetic,0.83,1.0,0.95,0.9267,"Subject: Apology and Update on Morning's Dashboard Disruption
 
 Dear Customer,
 
-I am sorry for the dashboard service disruption you experienced this morning. The service was unavailable for 42 minutes, and we understand that even a short interruption can create real frustration when your team depends on the dashboard for daily decisions.
+I want to start by apologizing for the disruption you experienced with our dashboard service this morning. We know how critical it is for your team to have access to timely data, and a 42-minute outage was unacceptable.
 
-Our initial investigation shows that the outage was caused by a failed database failover. The incident response team worked to stabilize the environment, restore access, and verify that dashboard functionality was operating normally before closing the active incident. All services are now restored.
+After investigating the cause of the issue, we found that it was due to a failed database failover. Our engineering team worked diligently to restore services as quickly as possible and ensured all systems are now operational.
 
-We know that an apology is only part of the response. Our engineering team is completing a full root cause analysis, including why the failover did not complete as expected and what safeguards are needed to reduce the risk of recurrence. We will share that analysis within 48 hours.
+I want to assure you that we take full responsibility for the incident and are committed to preventing similar disruptions in the future. Within 48 hours, our team will share a detailed root cause analysis with you, outlining what happened and how we plan to improve our failover procedures.
 
-Thank you for your patience while we worked through the issue. We take the reliability of our service seriously and appreciate the trust you place in us.
+Please know that we value your trust and appreciate the patience you have shown while we worked to resolve this issue. If you have any questions or concerns, please don't hesitate to reach out to us directly.
+
+Thank you for choosing [Company Name].
 
 Sincerely,
-The Customer Operations Team"
-9,Invite stakeholders to a product demo,formal,1.0,0.9,1.0,0.9667,"Subject: Invitation: New Analytics Dashboard Demo on Thursday
+Jordan Lee"
+9,Invite stakeholders to a product demo,formal,0.83,1.0,1.0,0.9433,"Subject: Invitation to Product Demo on Thursday's New Analytics Dashboard
 
 Dear Stakeholders,
 
-You are invited to attend a product demo for the new analytics dashboard on Thursday at 2 p.m. Eastern. The session is intended for stakeholders from Sales, Product, and Customer Success who need to understand the dashboard's capabilities, positioning, and customer-facing value.
+We invite representatives from Sales, Product, and Customer Success to a product demo scheduled for this Thursday at 2 p.m. Eastern Time. This event will provide an in-depth look at the new analytics dashboard, highlighting its features, benefits, and potential applications across your teams.
 
-During the demo, the product team will walk through the dashboard's core analytics views, filtering options, reporting use cases, and planned release considerations. The goal is to ensure that each group has a shared understanding of how the dashboard works and how it can support upcoming customer conversations.
+The demo is designed to showcase the dashboard's capabilities and how it can support data-driven decision-making within our organization. We believe that a collaborative discussion of this tool will foster a deeper understanding among stakeholders and enable more effective alignment with business objectives.
 
-To make the session as useful as possible, please send any questions you would like addressed by Wednesday at noon. We will use those questions to shape the agenda and reserve time for discussion after the walkthrough.
+To ensure an engaging and informative session, we kindly request that you submit any questions or topics you'd like to explore during the demo by Wednesday noon at the latest. This will allow us to tailor our presentation and address your specific concerns in real-time.
 
-A calendar invitation with the meeting link will follow shortly. We look forward to your participation and feedback.
+Date: This Thursday
+Time: 2 p.m. Eastern Time
+Attendees: Sales, Product, Customer Success representatives
+
+We look forward to sharing this valuable resource with you and exploring how it can contribute to our collective success.
 
 Sincerely,
-Nina Patel"
-10,Send a performance review reminder to a manager,assertive,1.0,0.8,1.0,0.9333,"Subject: Reminder: Manager Review Submissions Due Friday
+[Your Name]"
+10,Send a performance review reminder to a manager,assertive,0.8,1.0,0.9,0.9,"Subject: Reminder: Performance Review Submissions Due This Week
 
-Hi Chris,
+Dear [Manager's Name],
 
-This is a reminder that manager self-assessments are due Friday. Please make sure your submission is complete and includes feedback for all direct reports before the deadline.
+As we approach the end of the quarter, I wanted to remind you that performance review submissions are due this Friday. It is essential that these reviews include feedback for all your direct reports, as it will inform compensation planning and help us ensure fairness across the team.
 
-Timely completion is important because calibration meetings begin next Tuesday. Those meetings depend on managers submitting clear, complete feedback in advance so performance themes, promotion considerations, and development needs can be discussed consistently across teams.
+To facilitate this process, our HR department has scheduled a series of calibration meetings starting next Tuesday. These sessions provide an opportunity to review and discuss your performance review submissions with colleagues from similar-sized teams, ensuring consistency and accuracy. I encourage you to participate actively in these sessions to ensure a comprehensive evaluation of your direct reports' performance.
 
-HR also needs submissions on time to finalize compensation planning. Late or incomplete reviews create avoidable delays in the process and make it harder to ensure fair and accurate decisions for employees.
+Please submit all performance reviews by Friday so that our HR team can finalize compensation planning on time. Your timely submission is crucial for making accurate adjustments to compensate our employees fairly and competitively.
 
-Please prioritize your review package this week and confirm once it has been submitted. If there is a specific blocker, let HR know today so we can resolve it before the deadline rather than after it has passed.
+If you have any questions or concerns, please don't hesitate to reach out to me directly. I am confident in your ability to complete this process successfully.
 
-Thank you for taking care of this promptly.
-
-Regards,
-Patricia"
+Best regards,
+[Your Name]"

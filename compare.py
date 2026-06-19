@@ -1,4 +1,4 @@
-"""Run generation, evaluation, and side-by-side model comparison."""
+"""Run generation, evaluation, and side-by-side model comparison via Ollama."""
 
 from __future__ import annotations
 
@@ -24,8 +24,8 @@ from generate import run_generation
 
 
 def load_scenarios(path: Path = SCENARIOS_PATH) -> list[dict[str, Any]]:
-    with Path(path).open("r", encoding="utf-8") as file:
-        return json.load(file)
+    with Path(path).open("r", encoding="utf-8") as f:
+        return json.load(f)
 
 
 def summarize_csv(path: Path, model_name: str) -> dict[str, float | str]:
@@ -34,32 +34,34 @@ def summarize_csv(path: Path, model_name: str) -> dict[str, float | str]:
         "model_name": model_name,
         "avg_fact_recall": round(float(frame["fact_recall_score"].mean()), 4),
         "avg_tone_accuracy": round(float(frame["tone_accuracy_score"].mean()), 4),
-        "avg_fluency": round(float(frame["fluency_score"].mean()), 4),
+        "avg_clarity_professionalism": round(
+            float(frame["clarity_professionalism_score"].mean()), 4
+        ),
         "avg_composite": round(float(frame["composite_score"].mean()), 4),
     }
 
 
 def save_summary(summary: dict[str, Any], path: Path) -> None:
-    with Path(path).open("w", encoding="utf-8") as file:
-        json.dump(summary, file, indent=2)
+    with Path(path).open("w", encoding="utf-8") as f:
+        json.dump(summary, f, indent=2)
 
 
 def print_comparison_table(summary: dict[str, Any]) -> None:
     metric_labels = {
         "avg_fact_recall": "Fact Recall",
         "avg_tone_accuracy": "Tone Accuracy",
-        "avg_fluency": "Fluency",
+        "avg_clarity_professionalism": "Clarity & Professionalism",
         "avg_composite": "Composite",
     }
     rows = [
         {
-            "metric": label,
-            "model_a": summary["model_a"][key],
-            "model_b": summary["model_b"][key],
+            "Metric": label,
+            MODEL_A_NAME: summary["model_a"][key],
+            MODEL_B_NAME: summary["model_b"][key],
         }
         for key, label in metric_labels.items()
     ]
-    print("\nModel Comparison")
+    print("\n=== Model Comparison ===")
     print(pd.DataFrame(rows).to_string(index=False))
     print(f"\nWinner: {summary['winner']}")
 
@@ -68,23 +70,34 @@ def run_pipeline() -> dict[str, Any]:
     Path(OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
     scenarios = load_scenarios()
 
-    print("Running pipeline in fully offline mode...")
-    print(f"Generating emails with {MODEL_A_NAME}...")
-    model_a_generated = run_generation(scenarios, profile_key=MODEL_A_KEY)
-    print(f"Generating emails with {MODEL_B_NAME}...")
-    model_b_generated = run_generation(scenarios, profile_key=MODEL_B_KEY)
+    print("=" * 50)
+    print("Email Generation Assistant - Ollama Pipeline")
+    print("=" * 50)
 
-    print(f"Evaluating {MODEL_A_NAME}...")
+    print(f"\nGenerating emails with {MODEL_A_NAME} (Few-Shot Prompting)...")
+    model_a_generated = run_generation(scenarios, profile_key=MODEL_A_KEY)
+    save_path_a = OUTPUT_DIR / "generated_model_a.json"
+    with Path(save_path_a).open("w", encoding="utf-8") as f:
+        json.dump(model_a_generated, f, indent=2)
+
+    print(f"\nGenerating emails with {MODEL_B_NAME} (Simple Prompting)...")
+    model_b_generated = run_generation(scenarios, profile_key=MODEL_B_KEY)
+    save_path_b = OUTPUT_DIR / "generated_model_b.json"
+    with Path(save_path_b).open("w", encoding="utf-8") as f:
+        json.dump(model_b_generated, f, indent=2)
+
+    print(f"\nEvaluating {MODEL_A_NAME} via LLM-as-a-Judge...")
     evaluate_all(scenarios, model_a_generated, RESULTS_MODEL_A_PATH)
-    print(f"Evaluating {MODEL_B_NAME}...")
+
+    print(f"\nEvaluating {MODEL_B_NAME} via LLM-as-a-Judge...")
     evaluate_all(scenarios, model_b_generated, RESULTS_MODEL_B_PATH)
 
     model_a_summary = summarize_csv(RESULTS_MODEL_A_PATH, MODEL_A_NAME)
     model_b_summary = summarize_csv(RESULTS_MODEL_B_PATH, MODEL_B_NAME)
     winner = (
-        "model_a"
+        MODEL_A_NAME
         if model_a_summary["avg_composite"] >= model_b_summary["avg_composite"]
-        else "model_b"
+        else MODEL_B_NAME
     )
 
     summary = {

@@ -1,17 +1,17 @@
 {
   "model_a": {
-    "model_name": "offline-reference-profile",
-    "avg_fact_recall": 1.0,
-    "avg_tone_accuracy": 0.91,
-    "avg_fluency": 1.0,
-    "avg_composite": 0.97
+    "model_name": "few-shot-roleplay",
+    "avg_fact_recall": 0.814,
+    "avg_tone_accuracy": 1.0,
+    "avg_clarity_professionalism": 0.922,
+    "avg_composite": 0.912
   },
   "model_b": {
-    "model_name": "offline-template-profile",
-    "avg_fact_recall": 0.75,
-    "avg_tone_accuracy": 0.92,
-    "avg_fluency": 0.81,
-    "avg_composite": 0.8267
+    "model_name": "simple-prompt",
+    "avg_fact_recall": 0.822,
+    "avg_tone_accuracy": 1.0,
+    "avg_clarity_professionalism": 0.916,
+    "avg_composite": 0.9127
   },
-  "winner": "model_a"
+  "winner": "simple-prompt"
 }
