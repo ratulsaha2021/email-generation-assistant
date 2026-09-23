@@ -44,6 +44,24 @@ Four tabs:
 - **Manage scenarios**: add, edit or delete the test scenarios in `scenarios.json`. The human reference email is optional; only scenarios that have one are scored as the baseline. The shipped set is backed up to `scenarios.original.json` on the first change, and **Reset to the original 10** restores it.
 - **Run the evaluation**: runs `compare.py` on the current scenarios and shows its live log.
 
+### Screenshots
+
+**Write an email**: both prompts write the email and the judge scores it. Unfilled placeholders are highlighted.
+
+![Write an email](docs/screenshots/write-email.png)
+
+**Test results**: aggregate scores and the three emails for each scenario side by side.
+
+![Test results](docs/screenshots/test-results.png)
+
+**Manage scenarios**: add, edit or delete the scenarios used for testing.
+
+![Manage scenarios](docs/screenshots/manage-scenarios.png)
+
+**Run the evaluation**: runs the full pipeline and streams its log.
+
+![Run the evaluation](docs/screenshots/run-evaluation.png)
+
 ## Command line
 ```bash
 python compare.py                    # full pipeline: generate, judge, summarize, write report
