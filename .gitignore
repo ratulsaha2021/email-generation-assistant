@@ -6,3 +6,5 @@ env/
 .pytest_cache/
 .DS_Store
 nltk_data/
+.kilo/
+scenarios.original.json

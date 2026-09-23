@@ -1,17 +1,36 @@
 {
+  "generator_model": "gemma4:e4b",
+  "judge_model": "gemma4:26b",
   "model_a": {
     "model_name": "few-shot-roleplay",
-    "avg_fact_recall": 0.814,
+    "scenarios": 10,
+    "avg_fact_recall": 1.0,
     "avg_tone_accuracy": 1.0,
-    "avg_clarity_professionalism": 0.922,
-    "avg_composite": 0.912
+    "avg_clarity_professionalism": 1.0,
+    "avg_composite": 1.0,
+    "total_placeholders": 0,
+    "avg_word_count": 117.9
   },
   "model_b": {
     "model_name": "simple-prompt",
-    "avg_fact_recall": 0.822,
+    "scenarios": 10,
+    "avg_fact_recall": 1.0,
     "avg_tone_accuracy": 1.0,
-    "avg_clarity_professionalism": 0.916,
-    "avg_composite": 0.9127
+    "avg_clarity_professionalism": 0.25,
+    "avg_composite": 0.75,
+    "total_placeholders": 37,
+    "avg_word_count": 180.9
   },
-  "winner": "simple-prompt"
+  "reference": {
+    "model_name": "human-reference",
+    "scenarios": 10,
+    "avg_fact_recall": 1.0,
+    "avg_tone_accuracy": 1.0,
+    "avg_clarity_professionalism": 1.0,
+    "avg_composite": 1.0,
+    "total_placeholders": 0,
+    "avg_word_count": 168.9
+  },
+  "composite_margin": 0.25,
+  "winner": "few-shot-roleplay"
 }

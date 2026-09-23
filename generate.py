@@ -1,163 +1,194 @@
-"""Generate business emails using Ollama with advanced prompting techniques."""
+"""Generate business emails with Ollama using two prompting strategies.
+
+Model A: role-playing system prompt + few-shot demonstrations (advanced).
+Model B: a one-line instruction with no role or examples (baseline).
+"""
 
 from __future__ import annotations
 
+import argparse
 import json
-import time
+import re
 from pathlib import Path
 from typing import Any
 
-import requests
-
 from constants import (
+    GENERATED_PATHS,
+    GENERATION_TEMPERATURE,
+    GENERATOR_MODEL,
     MODEL_A_KEY,
-    MODEL_B_KEY,
     MODEL_A_NAME,
+    MODEL_B_KEY,
     MODEL_B_NAME,
-    OUTPUT_DIR,
     SCENARIOS_PATH,
 )
+from llm import chat, ensure_models_available
 
-OLLAMA_API = "http://localhost:11434/api/chat"
-MODEL_NAME = "llama3.2:3b"
+PROFILE_NAMES = {MODEL_A_KEY: MODEL_A_NAME, MODEL_B_KEY: MODEL_B_NAME}
 
+# Demonstrations use intents that do NOT appear in scenarios.json, so the
+# few-shot strategy cannot score well by copying a test answer.
 FEW_SHOT_EXAMPLES = [
     {
-        "intent": "Follow up after a client meeting",
+        "intent": "Confirm a vendor onboarding schedule",
         "key_facts": [
-            "The meeting was held on Tuesday with Acme Retail's operations team",
-            "The client is interested in automating weekly inventory reports",
-            "A pilot proposal will be sent by Friday",
+            "Onboarding for Brightline Logistics starts on March 3",
+            "Security review documents are due by February 24",
+            "Priya Shah is the primary onboarding contact",
         ],
         "tone": "formal",
-        "email": "Subject: Follow-Up on Tuesday's Inventory Automation Discussion\n\nDear Ms. Carter,\n\nThank you for meeting with us on Tuesday and for including Acme Retail's operations team in such a productive discussion. I appreciated the opportunity to learn more about the team's current reporting process and the time spent each week preparing inventory updates across your regional locations.\n\nBased on the conversation, it is clear that automating weekly inventory reports could reduce manual effort, improve consistency, and give your managers faster visibility into stock exceptions. Our team is preparing a pilot proposal that will outline the recommended workflow, implementation timeline, success criteria, and estimated support requirements. I will send that proposal by Friday for your review.\n\nAs a next step, I recommend scheduling a technical discovery call next week with your reporting lead and our solutions architect. That session will help us confirm data sources, access requirements, and any integration considerations before the pilot begins.\n\nPlease let me know which times work best for your team next week.\n\nSincerely,\nJordan Lee",
+        "email": (
+            "Subject: Confirmation of Brightline Logistics Onboarding Schedule\n\n"
+            "Dear Mr. Alvarez,\n\n"
+            "Thank you for confirming Brightline Logistics as our new transportation partner. "
+            "I am writing to confirm that onboarding will begin on March 3.\n\n"
+            "To keep that date on track, we kindly ask that your team submit the security review "
+            "documents by February 24. Our compliance group needs this time to complete its "
+            "assessment before system access is granted.\n\n"
+            "Priya Shah will serve as your primary onboarding contact and will coordinate "
+            "training sessions, account setup, and any questions that arise along the way.\n\n"
+            "Please reply to confirm receipt, and do not hesitate to reach out if any part of "
+            "the schedule needs adjustment.\n\n"
+            "Sincerely,\nMorgan Ellis\nVendor Management"
+        ),
     },
     {
-        "intent": "Apologize for a service disruption",
+        "intent": "Announce a mandatory security patch",
         "key_facts": [
-            "The dashboard service was unavailable for 42 minutes this morning",
-            "The outage was caused by a failed database failover",
-            "All services are now restored",
+            "A critical VPN vulnerability was disclosed this morning",
+            "All laptops must install the patch by 5 PM today",
+            "Unpatched devices will lose network access tonight",
         ],
-        "tone": "empathetic",
-        "email": "Subject: Apology and Update on This Morning's Dashboard Disruption\n\nDear Customer,\n\nI am sorry for the dashboard service disruption you experienced this morning. The service was unavailable for 42 minutes, and we understand that even a short interruption can create real frustration when your team depends on the dashboard for daily decisions.\n\nOur initial investigation shows that the outage was caused by a failed database failover. The incident response team worked to stabilize the environment, restore access, and verify that dashboard functionality was operating normally before closing the active incident. All services are now restored.\n\nWe know that an apology is only part of the response. Our engineering team is completing a full root cause analysis, including why the failover did not complete as expected and what safeguards are needed to reduce the risk of recurrence. We will share that analysis within 48 hours.\n\nThank you for your patience while we worked through the issue. We take the reliability of our service seriously and appreciate the trust you place in us.\n\nSincerely,\nThe Customer Operations Team",
+        "tone": "urgent",
+        "email": (
+            "Subject: ACTION REQUIRED by 5 PM Today: Install VPN Security Patch\n\n"
+            "Hi everyone,\n\n"
+            "A critical VPN vulnerability was disclosed this morning, and we need every laptop "
+            "patched immediately.\n\n"
+            "Please install the update from the Software Center by 5 PM today. It takes about "
+            "ten minutes and requires one restart. Unpatched devices will lose network access "
+            "tonight to protect the company network.\n\n"
+            "If the installation fails or you cannot restart before the deadline, contact the "
+            "IT help desk right away so we can assist.\n\n"
+            "Thank you for acting quickly.\n\n"
+            "Best regards,\nSam Okafor\nIT Security"
+        ),
+    },
+    {
+        "intent": "Invite the team to a celebration lunch",
+        "key_facts": [
+            "The team shipped the mobile app release last week",
+            "Lunch is on Thursday at 12:30 at Rosa's Kitchen",
+            "Please reply by Tuesday with dietary preferences",
+        ],
+        "tone": "casual",
+        "email": (
+            "Subject: Lunch on Us This Thursday!\n\n"
+            "Hey team,\n\n"
+            "We shipped the mobile app release last week, and that deserves a proper "
+            "celebration! Let's grab lunch together on Thursday at 12:30 at Rosa's Kitchen.\n\n"
+            "It's a relaxed get-together, so come hungry and ready to swap launch stories.\n\n"
+            "Just reply by Tuesday with any dietary preferences so we can sort out the order.\n\n"
+            "See you there!\n\nCheers,\nTaylor"
+        ),
     },
 ]
 
-FEW_SHOT_SYSTEM_PROMPT = """You are a senior business communications specialist. Your role is to write clear, professional emails that precisely match the requested tone and seamlessly incorporate all required key facts.
+FEW_SHOT_SYSTEM_PROMPT = """You are a senior business communications specialist. You write clear, professional emails that precisely match the requested tone and naturally incorporate every required key fact.
 
-Follow these guidelines:
-- Use the exact tone requested (formal, casual, urgent, empathetic, or assertive)
-- Naturally include ALL key facts without listing them as bullet points
-- Write a clear, relevant subject line
-- Use proper business email structure: greeting, body, call to action, sign-off
-- Keep the email between 100-250 words
-- Do NOT include any explanatory text before or after the email"""
+Rules:
+- Match the requested tone exactly (formal, casual, urgent, empathetic, or assertive).
+- Include EVERY key fact, woven into prose rather than copied as bullet points.
+- Start with a specific "Subject:" line.
+- Use a greeting, a focused body, a clear call to action, and a sign-off with a name.
+- Keep the body between 100 and 250 words.
+- Never use placeholders such as [Name], [Date], or [Your Name]; invent plausible names if needed.
+- Output only the email, with no commentary before or after it."""
 
-SIMPLE_SYSTEM_PROMPT = """Write a professional email based on the given intent, key facts, and tone. Include all key facts."""
-
-
-def _call_ollama(messages: list[dict], temperature: float = 0.7) -> str:
-    payload = {
-        "model": MODEL_NAME,
-        "messages": messages,
-        "stream": False,
-        "temperature": temperature,
-    }
-    for attempt in range(3):
-        try:
-            resp = requests.post(OLLAMA_API, json=payload, timeout=120)
-            resp.raise_for_status()
-            data = resp.json()
-            return data["message"]["content"].strip()
-        except requests.exceptions.Timeout:
-            if attempt < 2:
-                time.sleep(2 ** attempt)
-                continue
-            raise
-        except requests.exceptions.ConnectionError:
-            raise RuntimeError(
-                "Cannot connect to Ollama. Ensure it's running: ollama serve"
-            )
-    return ""
+SIMPLE_SYSTEM_PROMPT = "Write a professional email based on the given intent, key facts, and tone."
 
 
-def _build_few_shot_messages(scenario: dict[str, Any]) -> list[dict]:
-    messages = [{"role": "system", "content": FEW_SHOT_SYSTEM_PROMPT}]
-
-    for example in FEW_SHOT_EXAMPLES:
-        user_content = (
-            f"Intent: {example['intent']}\n"
-            f"Key Facts:\n" + "\n".join(f"- {f}" for f in example["key_facts"]) + "\n"
-            f"Tone: {example['tone']}"
-        )
-        messages.append({"role": "user", "content": user_content})
-        messages.append({"role": "assistant", "content": example["email"]})
-
-    user_content = (
-        f"Intent: {scenario['intent']}\n"
-        f"Key Facts:\n" + "\n".join(f"- {f}" for f in scenario["key_facts"]) + "\n"
-        f"Tone: {scenario['tone']}"
-    )
-    messages.append({"role": "user", "content": user_content})
-    return messages
+def _format_request(item: dict[str, Any]) -> str:
+    facts = "\n".join(f"- {fact}" for fact in item["key_facts"])
+    return f"Intent: {item['intent']}\nKey Facts:\n{facts}\nTone: {item['tone']}"
 
 
-def _build_simple_messages(scenario: dict[str, Any]) -> list[dict]:
-    user_content = (
-        f"Write a {scenario['tone']} email with this intent: {scenario['intent']}\n\n"
-        f"Key facts to include:\n" + "\n".join(f"- {f}" for f in scenario["key_facts"])
-    )
-    return [
-        {"role": "system", "content": SIMPLE_SYSTEM_PROMPT},
-        {"role": "user", "content": user_content},
-    ]
+def build_messages(scenario: dict[str, Any], profile_key: str) -> list[dict[str, str]]:
+    if profile_key == MODEL_A_KEY:
+        messages = [{"role": "system", "content": FEW_SHOT_SYSTEM_PROMPT}]
+        for example in FEW_SHOT_EXAMPLES:
+            messages.append({"role": "user", "content": _format_request(example)})
+            messages.append({"role": "assistant", "content": example["email"]})
+        messages.append({"role": "user", "content": _format_request(scenario)})
+        return messages
+    if profile_key == MODEL_B_KEY:
+        return [
+            {"role": "system", "content": SIMPLE_SYSTEM_PROMPT},
+            {"role": "user", "content": _format_request(scenario)},
+        ]
+    raise ValueError(f"Unknown profile: {profile_key}")
+
+
+def clean_email(text: str) -> str:
+    """Strip code fences and any chatter before the subject line."""
+    text = re.sub(r"^```[a-z]*\s*|\s*```$", "", text.strip())
+    match = re.search(r"^\**\s*Subject:", text, re.IGNORECASE | re.MULTILINE)
+    if match:
+        text = text[match.start():]
+    return text.strip()
 
 
 def generate_email(scenario: dict[str, Any], profile_key: str) -> str:
-    if profile_key == MODEL_A_KEY:
-        messages = _build_few_shot_messages(scenario)
-    elif profile_key == MODEL_B_KEY:
-        messages = _build_simple_messages(scenario)
-    else:
-        raise ValueError(f"Unknown profile: {profile_key}")
-
-    return _call_ollama(messages)
+    raw = chat(GENERATOR_MODEL, build_messages(scenario, profile_key), GENERATION_TEMPERATURE)
+    return clean_email(raw)
 
 
-def run_generation(
-    scenarios: list[dict[str, Any]],
-    profile_key: str = MODEL_A_KEY,
-) -> list[dict[str, Any]]:
+def run_generation(scenarios: list[dict[str, Any]], profile_key: str) -> list[dict[str, Any]]:
     results = []
-    for scenario in scenarios:
-        print(f"  Generating email {scenario['scenario_id']}/10...")
-        email = generate_email(scenario, profile_key)
+    for index, scenario in enumerate(scenarios, start=1):
+        print(f"  [{PROFILE_NAMES[profile_key]}] scenario {scenario['scenario_id']} ({index}/{len(scenarios)})")
         results.append({
             "scenario_id": scenario["scenario_id"],
             "intent": scenario["intent"],
             "tone": scenario["tone"],
             "key_facts": scenario["key_facts"],
-            "generated_email": email,
+            "generator_model": GENERATOR_MODEL,
+            "generated_email": generate_email(scenario, profile_key),
         })
     return results
 
 
-def load_scenarios(path: Path = SCENARIOS_PATH) -> list[dict[str, Any]]:
+def load_scenarios(path: Path = SCENARIOS_PATH, limit: int | None = None) -> list[dict[str, Any]]:
     with Path(path).open("r", encoding="utf-8") as f:
+        scenarios = json.load(f)
+    return scenarios[:limit] if limit else scenarios
+
+
+def save_generated(items: list[dict[str, Any]], path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as f:
+        json.dump(items, f, indent=2, ensure_ascii=False)
+
+
+def load_generated(path: Path) -> list[dict[str, Any]]:
+    with path.open("r", encoding="utf-8") as f:
         return json.load(f)
 
 
-def save_generated_emails(
-    generated_emails: list[dict[str, Any]], path: str
-) -> None:
-    Path(OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
-    with Path(path).open("w", encoding="utf-8") as f:
-        json.dump(generated_emails, f, indent=2)
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--profile", choices=[MODEL_A_KEY, MODEL_B_KEY, "all"], default="all")
+    parser.add_argument("--limit", type=int, help="Only use the first N scenarios")
+    args = parser.parse_args()
+
+    ensure_models_available(GENERATOR_MODEL)
+    scenarios = load_scenarios(limit=args.limit)
+    profiles = [MODEL_A_KEY, MODEL_B_KEY] if args.profile == "all" else [args.profile]
+    for profile_key in profiles:
+        items = run_generation(scenarios, profile_key)
+        save_generated(items, GENERATED_PATHS[profile_key])
+        print(f"Saved {len(items)} emails to {GENERATED_PATHS[profile_key]}")
 
 
 if __name__ == "__main__":
-    scenarios = load_scenarios()
-    results = run_generation(scenarios, profile_key=MODEL_A_KEY)
-    save_generated_emails(results, str(OUTPUT_DIR / "generated_model_a.json"))
-    print(f"Generated {len(results)} emails with {MODEL_A_NAME}.")
+    main()

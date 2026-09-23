@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Email Generation Assistant</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#F3F5F8; --surface:#FFFFFF; --ink:#16202B; --muted:#5A6878; --line:#D8DEE6;
+  --a:#1F5E8C; --b:#8A6A2E; --ref:#4F6B58;
+  --warn-bg:#FCE7B2; --warn-ink:#6B4700; --err:#A33A2B; --err-bg:#FBE4E0;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#10161D; --surface:#18212B; --ink:#E4EAF0; --muted:#94A3B3; --line:#2B3744;
+    --a:#7FB3DD; --b:#D5B477; --ref:#9BBBA4;
+    --warn-bg:#5A4210; --warn-ink:#FFE3A3; --err:#F2A193; --err-bg:#43201B; color-scheme:dark;
+  }
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 "IBM Plex Sans",system-ui,sans-serif;padding-inline:16px;padding-block:28px 64px}
+.wrap{max-width:1120px;margin:0 auto;display:grid;gap:28px}
+h1,h2{font-family:"IBM Plex Sans Condensed","IBM Plex Sans",system-ui,sans-serif;font-weight:600;margin:0;line-height:1.2;text-wrap:balance}
+h1{font-size:clamp(26px,4vw,34px)}
+h2{font-size:20px}
+p{margin:0;max-width:70ch}
+.muted{color:var(--muted)}
+.meta{display:flex;flex-wrap:wrap;gap:6px 18px;font:13px "IBM Plex Mono",ui-monospace,monospace;color:var(--muted)}
+.meta b{color:var(--ink);font-weight:500}
+header{display:grid;gap:10px}
+nav{display:flex;gap:4px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+nav button{font:500 14px "IBM Plex Sans",sans-serif;background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);padding:10px 14px;cursor:pointer;margin-bottom:-1px}
+nav button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--ink)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--a);outline-offset:2px}
+.panel{display:grid;gap:20px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:18px 20px}
+form{display:grid;gap:16px}
+.row{display:grid;grid-template-columns:1fr 200px;gap:16px}
+label{display:grid;gap:6px;font-weight:500;font-size:14px}
+label small{font-weight:400;color:var(--muted)}
+input,select,textarea{font:15px "IBM Plex Sans",sans-serif;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:9px 11px;width:100%}
+textarea{min-height:130px;resize:vertical;line-height:1.5}
+.checks{display:flex;flex-wrap:wrap;gap:8px 20px;font-size:14px}
+.checks label{display:flex;align-items:center;gap:8px;font-weight:400}
+.checks input{width:auto}
+.actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.btn{font:600 14px "IBM Plex Sans",sans-serif;border-radius:4px;padding:10px 18px;cursor:pointer;border:1px solid var(--ink);background:var(--ink);color:var(--bg)}
+.btn.secondary{background:var(--surface);color:var(--ink);border-color:var(--line)}
+.btn:disabled{opacity:.55;cursor:progress}
+.status{font-size:14px;color:var(--muted)}
+.error{background:var(--err-bg);color:var(--err);padding:10px 14px;border-radius:4px;font-size:14px}
+.emails{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.mail{background:var(--surface);border:1px solid var(--line);border-radius:6px;display:flex;flex-direction:column;min-width:0}
+.mail-head{padding:12px 14px;border-bottom:1px solid var(--line);display:grid;gap:6px}
+.mail-head .name{font:600 14px "IBM Plex Sans Condensed",sans-serif;letter-spacing:.02em}
+.col-a{color:var(--a)} .col-b{color:var(--b)} .col-ref{color:var(--ref)}
+.scores{display:flex;flex-wrap:wrap;gap:4px 12px;font:12px "IBM Plex Mono",monospace;color:var(--muted)}
+.scores b{color:var(--ink);font-weight:500}
+.mail pre{margin:0;padding:14px;white-space:pre-wrap;word-break:break-word;font:13px/1.6 "IBM Plex Mono",ui-monospace,monospace;flex:1}
+.mail mark{background:var(--warn-bg);color:var(--warn-ink);border-radius:2px;padding:0 2px}
+.note{padding:10px 14px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+.bad{color:var(--warn-ink);background:var(--warn-bg);padding:1px 6px;border-radius:3px}
+.mail-foot{padding:8px 14px;border-top:1px solid var(--line)}
+.copy{font:500 12px "IBM Plex Sans",sans-serif;background:none;border:1px solid var(--line);color:var(--ink);border-radius:4px;padding:4px 10px;cursor:pointer}
+.scroll{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:6px}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;font-size:14px}
+th,td{padding:10px 14px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+thead th{font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:500}
+tbody tr:last-child td{border-bottom:0}
+.picker{display:flex;flex-wrap:wrap;gap:6px}
+.picker button{font:500 13px "IBM Plex Sans",sans-serif;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:6px 11px;border-radius:4px;cursor:pointer}
+.picker button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.facts{margin:4px 0 0;padding-left:20px;color:var(--muted);font-size:14px}
+.log{background:#0E141A;color:#CFE0EE;font:12.5px/1.55 "IBM Plex Mono",monospace;border-radius:6px;padding:14px;max-height:420px;overflow:auto;white-space:pre-wrap;margin:0}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--ink);border-radius:50%;animation:spin .8s linear infinite;vertical-align:-2px;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spinner{animation:none}}
+.sc-list{display:grid;gap:10px}
+.sc{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:14px 16px;display:grid;grid-template-columns:auto 1fr auto;gap:4px 14px;align-items:start}
+.sc-id{font:500 13px "IBM Plex Mono",monospace;color:var(--muted);padding-top:2px}
+.sc-title{font-weight:600}
+.sc-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.chip{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:1px 9px;color:var(--muted)}
+.chip.tone{color:var(--a);border-color:currentColor}
+.sc-facts{grid-column:2;margin:6px 0 0;padding-left:18px;color:var(--muted);font-size:13.5px}
+.sc-actions{display:flex;gap:6px}
+.sc-actions button,.link-btn{font:500 13px "IBM Plex Sans",sans-serif;background:var(--surface);border:1px solid var(--line);color:var(--ink);border-radius:4px;padding:5px 11px;cursor:pointer}
+.sc-actions button.danger{color:var(--err)}
+.sc.editing{outline:2px solid var(--a);outline-offset:-1px}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.ok{color:var(--ref);font-size:14px}
+@media (max-width:640px){.row{grid-template-columns:1fr}.sc{grid-template-columns:1fr}.sc-facts{grid-column:1}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Email Generation Assistant</h1>
+    <p class="muted">Write a business email with a local AI model, compare two prompting strategies, and see how a judge model scores them.</p>
+    <div class="meta" id="meta">Loading…</div>
+  </header>
+
+  <nav role="tablist">
+    <button role="tab" id="tab-write" aria-selected="true" data-panel="write">Write an email</button>
+    <button role="tab" id="tab-results" aria-selected="false" data-panel="results">Test results</button>
+    <button role="tab" id="tab-manage" aria-selected="false" data-panel="manage">Manage scenarios</button>
+    <button role="tab" id="tab-run" aria-selected="false" data-panel="run">Run the evaluation</button>
+  </nav>
+
+  <!-- Write -->
+  <section class="panel" id="panel-write">
+    <div class="card">
+      <form id="gen-form">
+        <label>Start from an example <small>(optional; fills in the form with one of the 10 test scenarios)</small>
+          <select id="preset"><option value="">Write my own</option></select>
+        </label>
+        <div class="row">
+          <label>What is the email for?
+            <input id="intent" required placeholder="Request a project deadline extension">
+          </label>
+          <label>Tone
+            <select id="tone"></select>
+          </label>
+        </div>
+        <label>Key facts <small>One per line. Every fact should appear in the email.</small>
+          <textarea id="facts" required placeholder="The analytics dashboard delivery is at risk&#10;The current deadline is May 15&#10;We are requesting a new deadline of May 22"></textarea>
+        </label>
+        <div class="checks">
+          <label><input type="checkbox" id="use-a" checked> Few-shot prompt (advanced)</label>
+          <label><input type="checkbox" id="use-b" checked> Simple prompt (baseline)</label>
+          <label><input type="checkbox" id="use-judge" checked> Score with the judge model</label>
+        </div>
+        <div class="actions">
+          <button class="btn" id="gen-btn" type="submit">Generate email</button>
+          <span class="status" id="gen-status"></span>
+        </div>
+      </form>
+    </div>
+    <div id="gen-error" class="error" hidden></div>
+    <div class="emails" id="gen-out"></div>
+  </section>
+
+  <!-- Results -->
+  <section class="panel" id="panel-results" hidden>
+    <div id="res-empty" class="card" hidden>No results yet. Open <b>Run the evaluation</b> to create them.</div>
+    <div id="res-body" hidden>
+      <div class="panel">
+        <div class="card" id="verdict"></div>
+        <div class="scroll"><table id="agg"></table></div>
+        <h2>Compare the emails</h2>
+        <div class="picker" id="picker" role="group" aria-label="Scenario"></div>
+        <div><strong id="s-title"></strong><ul class="facts" id="s-facts"></ul></div>
+        <div class="emails" id="res-emails"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Manage -->
+  <section class="panel" id="panel-manage" hidden>
+    <p class="muted">These scenarios are the test set. <b>Run the evaluation</b> writes an email for each one with both prompts and scores them. Add your own, edit or delete any of them. The human reference email is optional; when you give one, it is scored too as a baseline.</p>
+    <div class="card">
+      <form id="sc-form">
+        <h2 id="sc-form-title">Add a scenario</h2>
+        <div class="row">
+          <label>What is the email for?
+            <input id="sc-intent" required placeholder="Ask my manager for leave next week">
+          </label>
+          <label>Tone
+            <select id="sc-tone"></select>
+          </label>
+        </div>
+        <label>Key facts <small>One per line, up to 10.</small>
+          <textarea id="sc-facts" required placeholder="I need leave from October 6 to October 10&#10;My project tasks are handed over to Rafi&#10;I will be reachable by phone for emergencies"></textarea>
+        </label>
+        <label>Human reference email <small>(optional; a good example email written by a person)</small>
+          <textarea id="sc-ref" placeholder="Subject: Leave Request for October 6-10&#10;&#10;Dear Ms. Rahman, ..."></textarea>
+        </label>
+        <div class="actions">
+          <button class="btn" id="sc-save" type="submit">Add scenario</button>
+          <button class="btn secondary" id="sc-cancel" type="button" hidden>Cancel editing</button>
+          <span class="status" id="sc-status"></span>
+        </div>
+      </form>
+    </div>
+    <div id="sc-error" class="error" hidden></div>
+    <div class="toolbar">
+      <h2 id="sc-count">Scenarios</h2>
+      <button class="link-btn" id="sc-reset" type="button" hidden>Reset to the original 10</button>
+    </div>
+    <div class="sc-list" id="sc-list"></div>
+  </section>
+
+  <!-- Run -->
+  <section class="panel" id="panel-run" hidden>
+    <div class="card">
+      <div class="panel" style="gap:14px">
+        <p>Runs the full test on the scenarios in <b>Manage scenarios</b> (<span id="run-count">10</span> right now): both prompts write every email, then the judge scores them together with the human reference emails. It takes about 2 minutes on this machine. Each run replaces the saved results, including the quick test.</p>
+        <div class="actions">
+          <button class="btn" id="run-full" type="button">Run all scenarios</button>
+          <button class="btn secondary" id="run-quick" type="button">Quick test (2 scenarios)</button>
+          <span class="status" id="run-status"></span>
+        </div>
+      </div>
+    </div>
+    <div id="run-error" class="error" hidden></div>
+    <pre class="log" id="run-log" hidden></pre>
+  </section>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const f2 = n => Number(n).toFixed(2);
+const NAMES = {model_a:"few-shot-roleplay", model_b:"simple-prompt", reference:"human-reference"};
+const CLS = {model_a:"col-a", model_b:"col-b", reference:"col-ref"};
+let scenarios = [];
+
+async function api(path, opts) {
+  const res = await fetch(path, opts);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+  return data;
+}
+const highlight = t => esc(t).replace(/\[[^\]\n]{2,40}\]/g, m => `<mark>${m}</mark>`);
+
+function mailCard(key, email, s) {
+  let scores = "";
+  if (s) {
+    const ph = s.placeholder_count ? `<span class="bad">${s.placeholder_count} placeholders</span>` : `<span>0 placeholders</span>`;
+    scores = `<div class="scores"><span>facts <b>${f2(s.fact_recall_score)}</b></span><span>tone <b>${f2(s.tone_accuracy_score)}</b></span><span>clarity <b>${f2(s.clarity_professionalism_score)}</b></span><span>overall <b>${f2(s.composite_score)}</b></span><span>${s.word_count} words</span>${ph}</div>`;
+  }
+  const missed = s && s.missed_facts ? `<div class="note"><b>Missing facts:</b> ${esc(s.missed_facts)}</div>` : "";
+  const notes = s && s.judge_notes ? `<div class="note"><b>Judge:</b> ${esc(s.judge_notes)}</div>` : "";
+  return `<article class="mail">
+    <div class="mail-head"><span class="name ${CLS[key]}">${NAMES[key]}</span>${scores}</div>
+    <pre>${highlight(email)}</pre>${missed}${notes}
+    <div class="mail-foot"><button class="copy" type="button" data-copy="${esc(email)}">Copy email</button></div>
+  </article>`;
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-copy]");
+  if (!b) return;
+  navigator.clipboard.writeText(b.dataset.copy).then(() => { b.textContent = "Copied"; setTimeout(() => b.textContent = "Copy email", 1500); })
+    .catch(() => { b.textContent = "Copy failed"; });
+});
+
+// Tabs
+document.querySelectorAll("nav button").forEach(tab => tab.addEventListener("click", () => {
+  document.querySelectorAll("nav button").forEach(t => t.setAttribute("aria-selected", t === tab));
+  document.querySelectorAll(".panel[id^=panel-]").forEach(p => p.hidden = p.id !== `panel-${tab.dataset.panel}`);
+  if (tab.dataset.panel === "results") loadResults();
+  if (tab.dataset.panel === "manage") loadScenarios();
+}));
+
+// Setup
+(async () => {
+  try {
+    const cfg = await api("/api/config");
+    $("meta").innerHTML = `<span>Writer model <b>${esc(cfg.generator_model)}</b></span><span>Judge model <b>${esc(cfg.judge_model)}</b></span>`;
+    $("tone").innerHTML = $("sc-tone").innerHTML = cfg.tones.map(t => `<option value="${t}">${t}</option>`).join("");
+    await loadScenarios();
+  } catch (err) { $("meta").textContent = `Cannot reach the app server: ${err.message}`; }
+})();
+
+$("preset").addEventListener("change", e => {
+  const s = scenarios[e.target.value];
+  if (!s) return;
+  $("intent").value = s.intent; $("tone").value = s.tone; $("facts").value = s.key_facts.join("\n");
+});
+
+// Generate
+$("gen-form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const profiles = [["use-a","model_a"],["use-b","model_b"]].filter(([id]) => $(id).checked).map(([, k]) => k);
+  $("gen-error").hidden = true;
+  if (!profiles.length) { $("gen-error").textContent = "Choose at least one prompt."; $("gen-error").hidden = false; return; }
+  const judge = $("use-judge").checked;
+  $("gen-btn").disabled = true;
+  $("gen-status").innerHTML = `<span class="spinner"></span>Writing${judge ? " and scoring" : ""}… the first request can take up to a minute while the models load.`;
+  $("gen-out").innerHTML = "";
+  try {
+    const data = await api("/api/generate", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({intent: $("intent").value, tone: $("tone").value,
+        key_facts: $("facts").value.split("\n"), profiles, judge}),
+    });
+    $("gen-out").innerHTML = Object.entries(data.results).map(([k, r]) => mailCard(k, r.email, r.scores)).join("");
+    $("gen-status").textContent = "Done.";
+  } catch (err) {
+    $("gen-error").textContent = err.message; $("gen-error").hidden = false; $("gen-status").textContent = "";
+  } finally { $("gen-btn").disabled = false; }
+});
+
+// Results
+let results = null, current = 0;
+async function loadResults() {
+  results = await api("/api/results").catch(() => ({}));
+  const has = results.summary && results.rows && results.rows.model_a;
+  $("res-empty").hidden = !!has; $("res-body").hidden = !has;
+  if (!has) return;
+  const S = results.summary, keys = ["model_a","model_b","reference"].filter(k => S[k]);
+  $("verdict").innerHTML = `<p><b>${esc(S.winner)}</b> wins: ${f2(S.model_a.avg_composite)} vs ${f2(S.model_b.avg_composite)} overall (margin ${S.composite_margin >= 0 ? "+" : ""}${f2(S.composite_margin)}). The simple prompt left <span class="bad">${S.model_b.total_placeholders} placeholders</span> across its emails, the few-shot prompt left ${S.model_a.total_placeholders}.</p>`;
+  const rows = [["Fact recall","avg_fact_recall",f2],["Tone accuracy","avg_tone_accuracy",f2],["Clarity & professionalism","avg_clarity_professionalism",f2],["Overall","avg_composite",f2],["Placeholders","total_placeholders",n=>n],["Average words","avg_word_count",n=>Math.round(n)]];
+  $("agg").innerHTML = `<thead><tr><th>Metric</th>${keys.map(k => `<th class="${CLS[k]}">${NAMES[k]}</th>`).join("")}</tr></thead><tbody>` +
+    rows.map(([l, m, fmt]) => `<tr><td>${l}</td>${keys.map(k => `<td>${fmt(S[k][m])}</td>`).join("")}</tr>`).join("") + "</tbody>";
+  $("picker").innerHTML = results.rows.model_a.map((r, i) => `<button type="button" data-i="${i}" title="${esc(r.intent)}">${r.scenario_id}</button>`).join("");
+  renderScenario();
+}
+$("picker").addEventListener("click", e => { const b = e.target.closest("button"); if (b) { current = +b.dataset.i; renderScenario(); } });
+function renderScenario() {
+  const rows = results.rows;
+  if (!rows.model_a[current]) current = 0;
+  const base = rows.model_a[current];
+  [...$("picker").children].forEach((b, i) => b.setAttribute("aria-pressed", i === current));
+  $("s-title").textContent = `Scenario ${base.scenario_id}: ${base.intent} (${base.tone})`;
+  const sc = scenarios.find(s => s.scenario_id === base.scenario_id);
+  $("s-facts").innerHTML = sc ? sc.key_facts.map(f => `<li>${esc(f)}</li>`).join("") : "";
+  // Reference emails exist only for some scenarios, so match rows by scenario id.
+  $("res-emails").innerHTML = ["model_a","model_b","reference"].map(k => (rows[k] || []).find(r => r.scenario_id === base.scenario_id) && [k, rows[k].find(r => r.scenario_id === base.scenario_id)])
+    .filter(Boolean).map(([k, r]) => mailCard(k, r.generated_email, r)).join("");
+}
+
+// Manage scenarios
+let editingId = null;
+async function loadScenarios() {
+  try { scenarios = await api("/api/scenarios"); } catch (err) { return; }
+  const keep = $("preset").value;
+  $("preset").innerHTML = `<option value="">Write my own</option>` +
+    scenarios.map((s, i) => `<option value="${i}">${s.scenario_id}. ${esc(s.intent)} (${s.tone})</option>`).join("");
+  if (scenarios[keep]) $("preset").value = keep;
+  $("run-count").textContent = scenarios.length;
+  $("sc-count").textContent = `Scenarios (${scenarios.length})`;
+  $("sc-list").innerHTML = scenarios.map(s => `
+    <article class="sc${s.scenario_id === editingId ? " editing" : ""}">
+      <span class="sc-id">#${s.scenario_id}</span>
+      <div>
+        <div class="sc-title">${esc(s.intent)}</div>
+        <div class="sc-meta"><span class="chip tone">${esc(s.tone)}</span><span class="chip">${s.key_facts.length} fact${s.key_facts.length === 1 ? "" : "s"}</span>
+          <span class="chip">${(s.human_reference_email || "").trim() ? "has reference email" : "no reference email"}</span></div>
+      </div>
+      <div class="sc-actions">
+        <button type="button" data-edit="${s.scenario_id}">Edit</button>
+        <button type="button" class="danger" data-del="${s.scenario_id}">Delete</button>
+      </div>
+      <ul class="sc-facts">${s.key_facts.map(f => `<li>${esc(f)}</li>`).join("")}</ul>
+    </article>`).join("");
+  const backup = await api("/api/scenarios/original").catch(() => ({}));
+  $("sc-reset").hidden = !backup.has_backup;
+}
+function resetForm() {
+  editingId = null;
+  $("sc-form").reset();
+  $("sc-form-title").textContent = "Add a scenario";
+  $("sc-save").textContent = "Add scenario";
+  $("sc-cancel").hidden = true;
+}
+function showScError(msg) { $("sc-error").textContent = msg; $("sc-error").hidden = !msg; }
+$("sc-form").addEventListener("submit", async e => {
+  e.preventDefault();
+  showScError("");
+  const body = {intent: $("sc-intent").value, tone: $("sc-tone").value, key_facts: $("sc-facts").value.split("\n"),
+    human_reference_email: $("sc-ref").value};
+  const wasEditing = editingId;
+  try {
+    await api(wasEditing ? `/api/scenarios/${wasEditing}` : "/api/scenarios", {
+      method: wasEditing ? "PUT" : "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)});
+    resetForm();
+    $("sc-status").innerHTML = `<span class="ok">${wasEditing ? `Scenario #${wasEditing} saved.` : "Scenario added."}</span>`;
+    await loadScenarios();
+  } catch (err) { showScError(err.message); }
+});
+$("sc-cancel").addEventListener("click", () => { resetForm(); $("sc-status").textContent = ""; loadScenarios(); });
+$("sc-list").addEventListener("click", async e => {
+  const edit = e.target.closest("[data-edit]"), del = e.target.closest("[data-del]");
+  if (edit) {
+    const s = scenarios.find(x => x.scenario_id === +edit.dataset.edit);
+    editingId = s.scenario_id;
+    $("sc-intent").value = s.intent; $("sc-tone").value = s.tone;
+    $("sc-facts").value = s.key_facts.join("\n"); $("sc-ref").value = s.human_reference_email || "";
+    $("sc-form-title").textContent = `Edit scenario #${s.scenario_id}`;
+    $("sc-save").textContent = "Save changes"; $("sc-cancel").hidden = false; $("sc-status").textContent = "";
+    loadScenarios();
+    $("sc-form").scrollIntoView({behavior: "smooth", block: "start"});
+    $("sc-intent").focus({preventScroll: true});
+  } else if (del) {
+    const id = +del.dataset.del;
+    if (!confirm(`Delete scenario #${id}? This cannot be undone (except with "Reset to the original 10").`)) return;
+    showScError("");
+    try {
+      await api(`/api/scenarios/${id}`, {method: "DELETE"});
+      if (editingId === id) resetForm();
+      $("sc-status").innerHTML = `<span class="ok">Scenario #${id} deleted.</span>`;
+      await loadScenarios();
+    } catch (err) { showScError(err.message); }
+  }
+});
+$("sc-reset").addEventListener("click", async () => {
+  if (!confirm("Replace all scenarios with the original 10? Your added and edited scenarios will be lost.")) return;
+  showScError("");
+  try {
+    await api("/api/scenarios/reset", {method: "POST"});
+    resetForm();
+    $("sc-status").innerHTML = `<span class="ok">Original 10 scenarios restored.</span>`;
+    await loadScenarios();
+  } catch (err) { showScError(err.message); }
+});
+
+// Run pipeline
+let polling = null;
+async function startRun(limit) {
+  $("run-error").hidden = true;
+  try {
+    await api("/api/pipeline", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({limit})});
+    poll();
+  } catch (err) { $("run-error").textContent = err.message; $("run-error").hidden = false; }
+}
+async function poll() {
+  clearTimeout(polling);
+  const st = await api("/api/pipeline").catch(() => null);
+  if (!st) return;
+  const log = $("run-log");
+  if (st.log.length) { log.hidden = false; log.textContent = st.log.join("\n"); log.scrollTop = log.scrollHeight; }
+  $("run-full").disabled = $("run-quick").disabled = st.running;
+  if (st.running) {
+    $("run-status").innerHTML = `<span class="spinner"></span>Running…`;
+    polling = setTimeout(poll, 1500);
+  } else if (st.returncode === 0) {
+    $("run-status").textContent = "Finished. The Test results tab now shows the new scores.";
+  } else if (st.returncode != null) {
+    $("run-status").textContent = `Stopped with an error (exit code ${st.returncode}). See the log below.`;
+  }
+}
+$("run-full").addEventListener("click", () => startRun(null));
+$("run-quick").addEventListener("click", () => startRun(2));
+poll();
+</script>
+</body>
+</html>

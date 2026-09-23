@@ -1,92 +1,66 @@
 # Email Generation Assistant
 
-## Overview
+Generates professional business emails with a local LLM (Ollama) and compares two prompting strategies using an **LLM-as-a-Judge** evaluation with three custom metrics.
 
-An AI-powered email generation assistant that uses **Ollama** (local LLM) to produce professional business emails. The project demonstrates **advanced prompt engineering (Few-Shot Prompting with Role-Playing)** and evaluates output quality using **LLM-as-a-Judge** with three custom metrics.
+- **Model A, `few-shot-roleplay`**: role-playing system prompt plus three few-shot demonstrations. The demonstration intents do not appear in the test scenarios.
+- **Model B, `simple-prompt`**: a one-line instruction with no role and no examples (baseline).
+- **Judge**: a separate, larger model, so no model grades its own output. The human reference emails are scored too, as a calibration baseline.
 
 ## Project Structure
 ```text
-email-generation-assistant/
-├── README.md                         # Setup, usage, and project documentation
-├── requirements.txt                  # Python dependencies
-├── constants.py                      # Shared paths and profile names
-├── generate.py                       # Ollama-based email generation (Few-Shot vs Simple)
-├── evaluate.py                       # LLM-as-a-Judge evaluation with 3 custom metrics
-├── compare.py                        # End-to-end orchestration script
-├── scenarios.json                    # Ten business email scenarios and reference emails
-├── .gitignore
-├── results/
-│   ├── generated_model_a.json        # Raw generated emails (Model A)
-│   ├── generated_model_b.json        # Raw generated emails (Model B)
-│   ├── results_model_a.csv           # Evaluation scores (Model A)
-│   ├── results_model_b.csv           # Evaluation scores (Model B)
-│   └── evaluation_summary.json       # Aggregated comparison and winner
-└── report/
-    └── final_report.md               # Written evaluation report
+├── constants.py        # Paths, model names, sampling settings (env-overridable)
+├── llm.py              # Ollama client: retries, JSON-schema output, model checks
+├── generate.py         # Prompt strategies and email generation
+├── evaluate.py         # LLM-as-a-Judge metrics + deterministic diagnostics
+├── report.py           # Builds report/final_report.md from results/
+├── compare.py          # End-to-end pipeline
+├── app.py              # Local web app (standard library HTTP server)
+├── static/index.html   # Web app UI
+├── scenarios.json      # 10 scenarios with key facts, tone, reference emails
+├── results/            # generated_*.json, results_*.csv, evaluation_summary.json
+└── report/final_report.md
 ```
 
-## Prerequisites
-
-- [Ollama](https://ollama.ai) installed and running
-- `llama3.2:3b` model pulled (`ollama pull llama3.2:3b`)
-
-## Setup Instructions
-
-1. Clone the repository.
-2. Create and activate a virtual environment.
+## Setup
+1. Install [Ollama](https://ollama.com) and pull the default models:
    ```bash
-   python -m venv .venv
-   source .venv/bin/activate  # Linux/Mac
-   # or: .venv\Scripts\activate  # Windows
+   ollama pull gemma4:e4b    # generator
+   ollama pull gemma4:26b    # judge
    ```
-3. Install dependencies.
+   To use other models, set `GENERATOR_MODEL`, `JUDGE_MODEL`, and optionally `OLLAMA_HOST`.
+2. Install the Python dependencies:
    ```bash
+   python -m venv .venv && source .venv/bin/activate
    pip install -r requirements.txt
    ```
-4. Ensure Ollama is running with the model:
-   ```bash
-   ollama pull llama3.2:3b
-   ```
 
-## How to Run
-
+## Web app
 ```bash
-# Run the full pipeline (generate + evaluate + compare)
-python compare.py
+python app.py        # then open http://127.0.0.1:8000
+```
+Four tabs:
+- **Write an email**: enter intent, facts and tone; both prompts write it and the judge scores it.
+- **Test results**: browse the saved evaluation results side by side.
+- **Manage scenarios**: add, edit or delete the test scenarios in `scenarios.json`. The human reference email is optional; only scenarios that have one are scored as the baseline. The shipped set is backed up to `scenarios.original.json` on the first change, and **Reset to the original 10** restores it.
+- **Run the evaluation**: runs `compare.py` on the current scenarios and shows its live log.
 
-# Run generation only
-python generate.py
+## Command line
+```bash
+python compare.py                    # full pipeline: generate, judge, summarize, write report
+python compare.py --limit 2          # quick smoke test on the first two scenarios
+python compare.py --skip-generation  # re-judge the existing generated emails
 
-# Run evaluation only (after generated emails exist)
-python evaluate.py
+python generate.py --profile model_a # generation only
+python evaluate.py --profile all     # judging only (model_a, model_b, reference)
+python report.py                     # rebuild the report from results/
 ```
 
-## Prompting Strategies Compared
+## Metrics (0.0-1.0)
+| Metric | Method |
+|---|---|
+| Fact Recall | The judge quotes evidence for each key fact and marks it present or absent; score = present / total |
+| Tone Accuracy | 1-5 rubric for the requested tone, rescaled as (score - 1) / 4 |
+| Clarity & Professionalism | 1-5 rubric (subject, flow, grammar, length, call to action, sign-off; placeholders are heavily penalized), rescaled the same way |
+| Composite | Mean of the three |
 
-### Model A: Few-Shot Prompting with Role-Playing (Advanced)
-- **System prompt**: "You are a senior business communications specialist..."
-- **Technique**: 2 high-quality example email scenarios are provided before the actual task
-- **Expected quality**: Higher — examples guide structure, tone, and fact integration
-
-### Model B: Simple Prompting (Baseline)
-- **System prompt**: "Write a professional email based on the given intent, key facts, and tone."
-- **Technique**: No examples, no role definition
-- **Expected quality**: Lower — less guidance leads to weaker structure and tone
-
-## Custom Metrics (LLM-as-a-Judge)
-
-All three metrics are scored by the same Ollama LLM using a structured evaluation prompt:
-
-1. **Fact Recall Score (0.0–1.0)**: What fraction of required key facts are naturally included in the email? The judge checks semantic presence, not exact keyword matching.
-
-2. **Tone Accuracy Score (0.0–1.0)**: How well does the email match the requested tone (formal, casual, urgent, empathetic, assertive)? The judge evaluates word choice, sentence structure, and overall voice.
-
-3. **Clarity & Professionalism Score (0.0–1.0)**: How clear, well-structured, and professional is the email? The judge evaluates subject line, logical flow, grammar, sentence variety, length appropriateness, and sign-off.
-
-A **Composite Score** is the arithmetic mean of all three.
-
-## Outputs
-- `results/results_model_a.csv` — Evaluation scores for Model A (all 10 scenarios)
-- `results/results_model_b.csv` — Evaluation scores for Model B (all 10 scenarios)
-- `results/evaluation_summary.json` — Side-by-side comparison and winner
-- `report/final_report.md` — Full evaluation report
+The judge's output is constrained by a JSON schema, so parsing cannot fail. Word count, subject-line presence, and unfilled `[placeholder]` counts are also recorded as deterministic checks.

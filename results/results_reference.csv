@@ -1,0 +1,143 @@
+scenario_id,intent,tone,fact_recall_score,tone_accuracy_score,clarity_professionalism_score,composite_score,missed_facts,judge_notes,word_count,placeholder_count,has_subject,generated_email
+1,Follow up after a client meeting,formal,1.0,1.0,1.0,1.0,,"Tone: The tone is perfectly formal. It uses a professional salutation, precise and sophisticated vocabulary (e.g., 'implementation timeline', 'integration considerations'), avoids all slang, and concludes with a professional sign-off. Clarity: The email is excellent. It features a highly specific subject line, a logical progression from recap to proposal to next steps, and a clear call to action. The length is ideal, and there are no placeholders or errors.",169,0,True,"Subject: Follow-Up on Tuesday's Inventory Automation Discussion
+
+Dear Ms. Carter,
+
+Thank you for meeting with us on Tuesday and for including Acme Retail's operations team in such a productive discussion. I appreciated the opportunity to learn more about the team's current reporting process and the time spent each week preparing inventory updates across your regional locations.
+
+Based on the conversation, it is clear that automating weekly inventory reports could reduce manual effort, improve consistency, and give your managers faster visibility into stock exceptions. Our team is preparing a pilot proposal that will outline the recommended workflow, implementation timeline, success criteria, and estimated support requirements. I will send that proposal by Friday for your review.
+
+As a next step, I recommend scheduling a technical discovery call next week with your reporting lead and our solutions architect. That session will help us confirm data sources, access requirements, and any integration considerations before the pilot begins.
+
+Please let me know which times work best for your team next week.
+
+Sincerely,
+Jordan Lee"
+2,Request a project deadline extension,empathetic,1.0,1.0,1.0,1.0,,"Tone: The tone is perfectly empathetic. It acknowledges the impact on the recipient's team, uses considerate language ('I understand deadline changes are never ideal'), and frames the delay as a way to prevent future 'downstream pressure' and 'rework,' showing care for the recipient's workload. Clarity: The email is highly professional. It features a specific subject line, a logical flow from problem to solution, and a clear call to action. The word count is appropriate, and the grammar is excellent.",180,0,True,"Subject: Request for Five-Day Extension on Migration Deliverable
+
+Hi Priya,
+
+I want to acknowledge the effort your team has already put into keeping the migration work on track for the May 30 deadline. We know this deliverable is important to the broader program, and we have been working carefully to avoid creating downstream pressure for your team.
+
+During final validation, our analytics team discovered data quality issues in the migration file that need to be corrected before we can responsibly hand over the output. Rather than sending a file that may require rework later, we believe the best course is to resolve the inconsistencies now and complete one additional QA pass.
+
+We are requesting an extension of five business days for this deliverable. Importantly, this adjustment will not affect the launch date, because the remaining implementation tasks can continue in parallel while we clean and revalidate the data.
+
+I understand deadline changes are never ideal, and I appreciate your flexibility. Please let me know if you would like a brief walkthrough of the issues and our recovery plan.
+
+Best,
+Morgan"
+3,Introduce a new team member,casual,1.0,1.0,1.0,1.0,,"Tone: The tone is appropriately casual and warm. It uses friendly phrasing ('I am happy to share', 'dig deeper', 'say hello') and a relaxed structure suitable for an internal team announcement, avoiding overly stiff or corporate jargon. Clarity: The email is excellent. It features a clear subject line, a logical flow from introduction to background to specific responsibilities, and a clear call to action (saying hello). The length is ideal, and there are no placeholders or errors.",178,0,True,"Subject: Please Welcome Lena Ortiz to the Team
+
+Hi everyone,
+
+I am happy to share that Lena Ortiz is joining us as our new Senior UX Researcher. Her first day will be Monday, June 10, and she will be working closely with Product, Design, and Customer Success as we move into the next phase of the portal redesign.
+
+Lena brings strong experience from her work on enterprise healthcare platforms, where she focused on turning complex user needs into practical product insights. That background should be especially helpful for us as we dig deeper into how administrators, clinicians, and support teams actually use the portal day to day.
+
+One of Lena's first priorities will be leading customer interview planning for the redesign effort. She will help us define participant criteria, structure the interview guide, and make sure the findings translate into decisions the team can act on.
+
+Please take a moment to say hello when she starts on Monday. I am excited for everyone to meet her and for the perspective she will bring to the team.
+
+Thanks,
+Alex"
+4,Escalate an unresolved support ticket,urgent,1.0,1.0,1.0,1.0,,"Tone: The tone is unmistakably urgent. The subject line uses 'Urgent', the time-sensitivity is established in the first paragraph, the language is direct, and there is a clear, immediate call to action with a specific deadline. Clarity: The email is highly professional and ready to send. It features a specific subject line, a logical flow from problem to impact to required action, excellent grammar, and a clear call to action. It stays within the ideal word count and contains no placeholders.",165,0,True,"Subject: Urgent Escalation Needed for Ticket #48291
+
+Hi Support Leadership Team,
+
+I am escalating support ticket #48291 because it has now been open for nine days and is blocking a critical customer workflow. The customer is unable to export monthly billing reports, which they need for their internal finance close process.
+
+The team has already completed two troubleshooting sessions with the customer, but neither session resolved the issue. At this point, the customer is understandably frustrated, and the account team is concerned that continued delays will damage confidence in our support process.
+
+Please assign a senior engineer to review the ticket and provide a response by 3 p.m. today. The immediate need is to confirm whether the issue is caused by account configuration, a permissions problem, or a product defect, and to give the customer a clear next step.
+
+I am available to join a handoff call if helpful, but we need visible progress today. Thank you for treating this as a priority.
+
+Regards,
+Dana"
+5,Send a project status update,formal,1.0,1.0,1.0,1.0,,"Tone: The tone is perfectly formal. It uses a professional salutation, precise vocabulary (e.g., 'aligned with the plan', 'technical dependency', 'requiring escalation'), and a proper formal sign-off. There is no slang or casual phrasing. Clarity: The email is excellent. It features a specific subject line, a logical flow from high-level status to specific technical details and risks, and is concise and well-structured. The call to action (monitoring for updates) is clear, and there are no placeholders or errors.",165,0,True,"Subject: CRM Integration Project Status Update
+
+Dear Stakeholders,
+
+I am writing to provide the latest status update on the CRM integration project. As of this week, the project is approximately 70% complete and remains aligned with the plan for the July 15 milestone.
+
+The primary accomplishment this week was the completion of API authentication testing. The results confirmed that the integration can securely connect to the required services using the approved authentication flow. This removes a major technical dependency and allows the engineering team to proceed with broader end-to-end testing.
+
+Data mapping for legacy accounts remains in progress. The team is currently reviewing field-level differences between the legacy system and the new CRM structure to ensure that account history, ownership, and segmentation data are transferred accurately. We are monitoring this work closely because it is the most complex remaining activity.
+
+At this time, there are no new risks requiring escalation. We will continue to provide updates as data mapping advances and testing expands.
+
+Sincerely,
+Taylor"
+6,Decline a vendor proposal politely,empathetic,1.0,1.0,1.0,1.0,,"Tone: The tone is perfectly empathetic. It acknowledges the effort the vendor put in, validates the quality of their work, and uses considerate language ('I know this is not the outcome you were hoping for') to soften the blow of the rejection. Clarity: The email is professional, well-structured, and concise. It follows a logical flow: appreciation, the decision/reasoning, and future outlook. There are no placeholders or errors.",175,0,True,"Subject: Update on Managed Security Monitoring Proposal
+
+Hi Daniel,
+
+Thank you for the time and care your team put into the managed security monitoring proposal. We appreciated the detailed walkthrough, the responsiveness during follow-up questions, and the effort to tailor the recommendation to our current environment.
+
+After a full review with both IT and Finance, we have decided not to move forward with the proposal at this time. The main factor is budget alignment. While the service offering is strong and relevant to our needs, the pricing exceeds the approved budget for the current planning cycle.
+
+I know this is not the outcome you were hoping for, especially given the work your team invested. Please know that the decision reflects timing and budget constraints rather than a lack of interest in the solution. We may revisit the proposal next fiscal year as our security roadmap and funding priorities are refreshed.
+
+Thank you again for your partnership and professionalism throughout the process. I hope we can stay in touch as future opportunities develop.
+
+Best regards,
+Renee"
+7,Request budget approval,assertive,1.0,1.0,1.0,1.0,,"Tone: The tone is appropriately assertive. It avoids passive language, uses confident phrasing ('I recommend approving', 'The timing is important'), and presents a clear, firm deadline and call to action without being aggressive. Clarity: The email is excellent. It features a specific subject line, a logical progression from the request to the justification and then the deadline, and a clear call to action. The word count is well within the professional range, and there are no placeholders or errors.",172,0,True,"Subject: Budget Approval Request for Onboarding Software
+
+Hi Martin,
+
+I am requesting approval for an $18,000 budget allocation for new onboarding software for the Customer Success team. This purchase directly supports the Q3 retention initiative and addresses a clear operational gap in our current onboarding process.
+
+Today, our team spends too much time on manual onboarding tasks that can be standardized and automated. Based on the vendor analysis and workflow review, the software is expected to reduce those manual tasks by approximately 30%. That time savings would allow Customer Success Managers to focus more consistently on adoption risk, customer education, and early value milestones.
+
+The timing is important. We need approval by June 21 to secure the discounted pricing currently offered by the vendor. Waiting beyond that date would increase the cost and delay implementation into the retention initiative window.
+
+I recommend approving this request so we can move forward with procurement and begin implementation planning immediately. Please let me know if you need any additional financial details before confirming.
+
+Regards,
+Samira"
+8,Apologize for a service disruption,empathetic,1.0,1.0,1.0,1.0,,"Tone: 5 - The tone is perfectly empathetic. It acknowledges the specific impact on the user ('create real frustration when your team depends on the dashboard'), uses gracious language, and demonstrates accountability without being overly dramatic. Clarity: 5 - The email is professional, well-structured, and concise. The subject line is descriptive, the flow moves logically from apology to cause to resolution to next steps, and there are no placeholders or errors.",176,0,True,"Subject: Apology and Update on This Morning's Dashboard Disruption
+
+Dear Customer,
+
+I am sorry for the dashboard service disruption you experienced this morning. The service was unavailable for 42 minutes, and we understand that even a short interruption can create real frustration when your team depends on the dashboard for daily decisions.
+
+Our initial investigation shows that the outage was caused by a failed database failover. The incident response team worked to stabilize the environment, restore access, and verify that dashboard functionality was operating normally before closing the active incident. All services are now restored.
+
+We know that an apology is only part of the response. Our engineering team is completing a full root cause analysis, including why the failover did not complete as expected and what safeguards are needed to reduce the risk of recurrence. We will share that analysis within 48 hours.
+
+Thank you for your patience while we worked through the issue. We take the reliability of our service seriously and appreciate the trust you place in us.
+
+Sincerely,
+The Customer Operations Team"
+9,Invite stakeholders to a product demo,formal,1.0,1.0,1.0,1.0,,"Tone: The tone is perfectly formal. It uses a professional salutation, precise language (e.g., 'intended for', 'ensure that each group has a shared understanding'), avoids slang, and concludes with a professional sign-off. Clarity: The email is excellent. It features a specific subject line, a logical flow from the 'what/when' to the 'why' and 'how', and a clear call to action regarding the submission of questions. The length is appropriate and the grammar is flawless.",158,0,True,"Subject: Invitation: New Analytics Dashboard Demo on Thursday
+
+Dear Stakeholders,
+
+You are invited to attend a product demo for the new analytics dashboard on Thursday at 2 p.m. Eastern. The session is intended for stakeholders from Sales, Product, and Customer Success who need to understand the dashboard's capabilities, positioning, and customer-facing value.
+
+During the demo, the product team will walk through the dashboard's core analytics views, filtering options, reporting use cases, and planned release considerations. The goal is to ensure that each group has a shared understanding of how the dashboard works and how it can support upcoming customer conversations.
+
+To make the session as useful as possible, please send any questions you would like addressed by Wednesday at noon. We will use those questions to shape the agenda and reserve time for discussion after the walkthrough.
+
+A calendar invitation with the meeting link will follow shortly. We look forward to your participation and feedback.
+
+Sincerely,
+Nina Patel"
+10,Send a performance review reminder to a manager,assertive,1.0,1.0,1.0,1.0,,"Tone: The tone is perfectly assertive. It uses direct language ('Please prioritize', 'confirm once it has been submitted') and clearly outlines the consequences of inaction ('Late or incomplete reviews create avoidable delays') without becoming aggressive or unprofessional. Clarity: The email is highly professional. It features a specific subject line, a logical flow from the deadline to the reasoning and then to the call to action, and maintains excellent concision. The call to action is unambiguous.",151,0,True,"Subject: Reminder: Manager Review Submissions Due Friday
+
+Hi Chris,
+
+This is a reminder that manager self-assessments are due Friday. Please make sure your submission is complete and includes feedback for all direct reports before the deadline.
+
+Timely completion is important because calibration meetings begin next Tuesday. Those meetings depend on managers submitting clear, complete feedback in advance so performance themes, promotion considerations, and development needs can be discussed consistently across teams.
+
+HR also needs submissions on time to finalize compensation planning. Late or incomplete reviews create avoidable delays in the process and make it harder to ensure fair and accurate decisions for employees.
+
+Please prioritize your review package this week and confirm once it has been submitted. If there is a specific blocker, let HR know today so we can resolve it before the deadline rather than after it has passed.
+
+Thank you for taking care of this promptly.
+
+Regards,
+Patricia"

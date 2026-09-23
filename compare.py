@@ -1,114 +1,114 @@
-"""Run generation, evaluation, and side-by-side model comparison via Ollama."""
+"""Run the full pipeline: generate -> judge -> summarize -> write report.
+
+Examples:
+    python compare.py                    # full run on all 10 scenarios
+    python compare.py --skip-generation  # re-judge existing generated emails
+    python compare.py --limit 2          # quick smoke test
+"""
 
 from __future__ import annotations
 
+import argparse
 import json
-from pathlib import Path
 from typing import Any
 
 import pandas as pd
 
 from constants import (
     EVALUATION_SUMMARY_PATH,
+    GENERATED_PATHS,
+    GENERATOR_MODEL,
+    JUDGE_MODEL,
     MODEL_A_KEY,
     MODEL_A_NAME,
     MODEL_B_KEY,
     MODEL_B_NAME,
-    OUTPUT_DIR,
-    RESULTS_MODEL_A_PATH,
-    RESULTS_MODEL_B_PATH,
-    SCENARIOS_PATH,
+    REFERENCE_KEY,
+    REFERENCE_NAME,
+    RESULTS_PATHS,
 )
-from evaluate import evaluate_all
-from generate import run_generation
+from evaluate import METRICS, emails_for, evaluate_all, with_reference
+from generate import load_scenarios, run_generation, save_generated
+from llm import OllamaError, ensure_models_available
+from report import write_report
+
+PROFILE_NAMES = {MODEL_A_KEY: MODEL_A_NAME, MODEL_B_KEY: MODEL_B_NAME, REFERENCE_KEY: REFERENCE_NAME}
 
 
-def load_scenarios(path: Path = SCENARIOS_PATH) -> list[dict[str, Any]]:
-    with Path(path).open("r", encoding="utf-8") as f:
-        return json.load(f)
-
-
-def summarize_csv(path: Path, model_name: str) -> dict[str, float | str]:
-    frame = pd.read_csv(path)
+def summarize(frame: pd.DataFrame, name: str) -> dict[str, Any]:
     return {
-        "model_name": model_name,
-        "avg_fact_recall": round(float(frame["fact_recall_score"].mean()), 4),
-        "avg_tone_accuracy": round(float(frame["tone_accuracy_score"].mean()), 4),
-        "avg_clarity_professionalism": round(
-            float(frame["clarity_professionalism_score"].mean()), 4
-        ),
+        "model_name": name,
+        "scenarios": int(len(frame)),
+        **{f"avg_{m.removesuffix('_score')}": round(float(frame[m].mean()), 4) for m in METRICS},
         "avg_composite": round(float(frame["composite_score"].mean()), 4),
+        "total_placeholders": int(frame["placeholder_count"].sum()),
+        "avg_word_count": round(float(frame["word_count"].mean()), 1),
     }
 
 
-def save_summary(summary: dict[str, Any], path: Path) -> None:
-    with Path(path).open("w", encoding="utf-8") as f:
-        json.dump(summary, f, indent=2)
-
-
-def print_comparison_table(summary: dict[str, Any]) -> None:
-    metric_labels = {
-        "avg_fact_recall": "Fact Recall",
-        "avg_tone_accuracy": "Tone Accuracy",
-        "avg_clarity_professionalism": "Clarity & Professionalism",
-        "avg_composite": "Composite",
-    }
-    rows = [
-        {
-            "Metric": label,
-            MODEL_A_NAME: summary["model_a"][key],
-            MODEL_B_NAME: summary["model_b"][key],
-        }
-        for key, label in metric_labels.items()
-    ]
-    print("\n=== Model Comparison ===")
-    print(pd.DataFrame(rows).to_string(index=False))
-    print(f"\nWinner: {summary['winner']}")
-
-
-def run_pipeline() -> dict[str, Any]:
-    Path(OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
-    scenarios = load_scenarios()
-
-    print("=" * 50)
-    print("Email Generation Assistant - Ollama Pipeline")
-    print("=" * 50)
-
-    print(f"\nGenerating emails with {MODEL_A_NAME} (Few-Shot Prompting)...")
-    model_a_generated = run_generation(scenarios, profile_key=MODEL_A_KEY)
-    save_path_a = OUTPUT_DIR / "generated_model_a.json"
-    with Path(save_path_a).open("w", encoding="utf-8") as f:
-        json.dump(model_a_generated, f, indent=2)
-
-    print(f"\nGenerating emails with {MODEL_B_NAME} (Simple Prompting)...")
-    model_b_generated = run_generation(scenarios, profile_key=MODEL_B_KEY)
-    save_path_b = OUTPUT_DIR / "generated_model_b.json"
-    with Path(save_path_b).open("w", encoding="utf-8") as f:
-        json.dump(model_b_generated, f, indent=2)
-
-    print(f"\nEvaluating {MODEL_A_NAME} via LLM-as-a-Judge...")
-    evaluate_all(scenarios, model_a_generated, RESULTS_MODEL_A_PATH)
-
-    print(f"\nEvaluating {MODEL_B_NAME} via LLM-as-a-Judge...")
-    evaluate_all(scenarios, model_b_generated, RESULTS_MODEL_B_PATH)
-
-    model_a_summary = summarize_csv(RESULTS_MODEL_A_PATH, MODEL_A_NAME)
-    model_b_summary = summarize_csv(RESULTS_MODEL_B_PATH, MODEL_B_NAME)
-    winner = (
-        MODEL_A_NAME
-        if model_a_summary["avg_composite"] >= model_b_summary["avg_composite"]
-        else MODEL_B_NAME
+def print_comparison(summary: dict[str, Any]) -> None:
+    keys = ["avg_fact_recall", "avg_tone_accuracy", "avg_clarity_professionalism", "avg_composite", "total_placeholders"]
+    table = pd.DataFrame(
+        {summary[k]["model_name"]: [summary[k][m] for m in keys] for k in (MODEL_A_KEY, MODEL_B_KEY, REFERENCE_KEY) if k in summary},
+        index=keys,
     )
+    print("\n=== Model Comparison ===")
+    print(table.to_string())
+    print(f"\nWinner: {summary['winner']} (composite margin {summary['composite_margin']:+.4f})")
 
-    summary = {
-        "model_a": model_a_summary,
-        "model_b": model_b_summary,
-        "winner": winner,
-    }
-    save_summary(summary, EVALUATION_SUMMARY_PATH)
-    print_comparison_table(summary)
+
+def run_pipeline(skip_generation: bool = False, limit: int | None = None) -> dict[str, Any]:
+    scenarios = load_scenarios(limit=limit)
+    if not scenarios:
+        raise SystemExit("scenarios.json has no scenarios. Add at least one before running the evaluation.")
+    print(f"Generator: {GENERATOR_MODEL} | Judge: {JUDGE_MODEL} | Scenarios: {len(scenarios)}")
+
+    if skip_generation:
+        missing = [str(p) for p in GENERATED_PATHS.values() if not p.exists()]
+        if missing:
+            raise SystemExit(f"--skip-generation needs existing files: {', '.join(missing)}")
+    else:
+        ensure_models_available(GENERATOR_MODEL)
+        print("\n--- Generation ---")
+        for key in (MODEL_A_KEY, MODEL_B_KEY):
+            save_generated(run_generation(scenarios, key), GENERATED_PATHS[key])
+
+    # All judging happens after all generation so each model is loaded once.
+    ensure_models_available(JUDGE_MODEL)
+    print("\n--- Evaluation (LLM-as-a-Judge) ---")
+    summary: dict[str, Any] = {"generator_model": GENERATOR_MODEL, "judge_model": JUDGE_MODEL}
+    for key in (MODEL_A_KEY, MODEL_B_KEY, REFERENCE_KEY):
+        # Reference emails are optional, so the baseline covers only scenarios that have one.
+        subset = with_reference(scenarios) if key == REFERENCE_KEY else scenarios
+        if not subset:
+            RESULTS_PATHS[key].unlink(missing_ok=True)
+            print(f"  [{PROFILE_NAMES[key]}] skipped: no scenario has a human reference email")
+            continue
+        frame = evaluate_all(subset, emails_for(key, scenarios), RESULTS_PATHS[key], PROFILE_NAMES[key])
+        summary[key] = summarize(frame, PROFILE_NAMES[key])
+
+    margin = summary[MODEL_A_KEY]["avg_composite"] - summary[MODEL_B_KEY]["avg_composite"]
+    summary["composite_margin"] = round(margin, 4)
+    summary["winner"] = MODEL_A_NAME if margin >= 0 else MODEL_B_NAME
+
+    EVALUATION_SUMMARY_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with EVALUATION_SUMMARY_PATH.open("w", encoding="utf-8") as f:
+        json.dump(summary, f, indent=2)
+    print_comparison(summary)
+    print(f"\nReport written to {write_report(summary)}")
     return summary
 
 
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--skip-generation", action="store_true", help="Reuse results/generated_*.json")
+    parser.add_argument("--limit", type=int, help="Only use the first N scenarios")
+    args = parser.parse_args()
+    try:
+        run_pipeline(skip_generation=args.skip_generation, limit=args.limit)
+    except OllamaError as exc:
+        raise SystemExit(f"Error: {exc}")
+
+
 if __name__ == "__main__":
-    run_pipeline()
+    main()
